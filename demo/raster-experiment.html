@@ -1,0 +1,77 @@
+<!doctype html>
+<!-- Chrome canvas experiment behind the pixel tolerance of test/dense-browser.cjs: the same Vega symbols drawn on one canvas, on worker canvases, as composited layers and as stripes; open in Chrome and call run(). -->
+<meta charset="utf-8"><title>Canvas raster experiment</title><body>
+<script src="/node_modules/vega/build/vega.min.js"></script>
+<script>
+window.run = async () => {
+  const W = 600, H = 400, N = 30000;
+  let s = 3; const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+  const cols = ["#4c78a8", "#f58518", "#e45756", "#72b7b2", "#54a24b"];
+  const items = []; for (let i = 0; i < N; i++) items.push({ x: 20 + rnd() * 560, y: 20 + rnd() * 360, size: 30, shape: "circle", stroke: cols[i % 5], strokeWidth: 2, fill: "transparent", opacity: 0.7 });
+  const sym = vega.Marks.symbol;
+  const drawAll = g => { const o = {}, sc = { items: [o] }; for (const it of items) { Object.assign(o, it); sym.draw(g, sc, null); } };
+  const white = () => { const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, W, H); return [c, g]; };
+  const data = g => g.getImageData(0, 0, W, H).data;
+  const [c1, g1] = white(); drawAll(g1); const ref = data(g1);
+  const cmp = d => { let px = 0, mx = 0; for (let i = 0; i < d.length; i += 4) { let m = 0; for (let k = 0; k < 3; k++) m = Math.max(m, Math.abs(d[i + k] - ref[i + k])); if (m) { px++; mx = Math.max(mx, m); } } return { px, mx }; };
+  const out = {};
+  // 2: main-thread OffscreenCanvas layer, composited
+  { const oc = new OffscreenCanvas(W, H); drawAll(oc.getContext("2d")); const [c, g] = white(); g.drawImage(oc, 0, 0); out.offscreenLayer = cmp(data(g)); }
+  // 3: DOM canvas layer, composited
+  { const l = document.createElement("canvas"); l.width = W; l.height = H; drawAll(l.getContext("2d")); const [c, g] = white(); g.drawImage(l, 0, 0); out.domLayer = cmp(data(g)); }
+  // 5: main-thread OffscreenCanvas with white background (no layer composite)
+  { const oc = new OffscreenCanvas(W, H); const g0 = oc.getContext("2d"); g0.fillStyle = "#fff"; g0.fillRect(0, 0, W, H); drawAll(g0); const [c, g] = white(); g.drawImage(oc, 0, 0); out.offscreenWhite = cmp(data(g)); }
+  // 4: worker OffscreenCanvas layer
+  {
+    const src = `importScripts("${location.origin}/node_modules/vega/build/vega.min.js"); onmessage = e => { const { W, H, items, bg } = e.data; const oc = new OffscreenCanvas(W, H), g = oc.getContext("2d"); if (bg) { g.fillStyle = "#fff"; g.fillRect(0, 0, W, H); } const o = {}, sc = { items: [o] }; for (const it of items) { Object.assign(o, it); vega.Marks.symbol.draw(g, sc, null); } const b = oc.transferToImageBitmap(); postMessage(b, [b]); };`;
+    const w = new Worker(URL.createObjectURL(new Blob([src], { type: "text/javascript" })));
+    for (const bg of [false, true]) {
+      const bmp = await new Promise(r => { w.onmessage = e => r(e.data); w.postMessage({ W, H, items, bg }); });
+      const [c, g] = white(); g.drawImage(bmp, 0, 0); out[bg ? "workerWhite" : "workerLayer"] = cmp(data(g));
+    }
+  }
+  // Stripes: small canvases, or full-size canvases clipped to the stripe.
+  {
+    const src2 = `importScripts("${location.origin}/node_modules/vega/build/vega.min.js"); onmessage = e => { const { W, H, items, t0, t1, full } = e.data; const oc = new OffscreenCanvas(W, full ? H : t1 - t0), g = oc.getContext("2d"); g.fillStyle = "#fff"; if (full) { g.beginPath(); g.rect(0, t0, W, t1 - t0); g.clip(); g.fillRect(0, t0, W, t1 - t0); } else { g.fillRect(0, 0, W, t1 - t0); g.setTransform(1, 0, 0, 1, 0, -t0); } const o = {}, sc = { items: [o] }; for (const it of items) { Object.assign(o, it); vega.Marks.symbol.draw(g, sc, null); } const b = oc.transferToImageBitmap(); postMessage(b, [b]); };`;
+    const w2 = new Worker(URL.createObjectURL(new Blob([src2], { type: "text/javascript" })));
+    for (const full of [false, true]) {
+      const [c, g] = white();
+      for (let q = 0; q < 8; q++) {
+        const t0 = q * H / 8, t1 = (q + 1) * H / 8;
+        const bmp = await new Promise(r => { w2.onmessage = e => r(e.data); w2.postMessage({ W, H, items, t0, t1, full }); });
+        if (full) g.drawImage(bmp, 0, t0, W, t1 - t0, 0, t0, W, t1 - t0); else g.drawImage(bmp, 0, t0);
+      }
+      out[full ? "stripesFullClip" : "stripesSmall"] = cmp(data(g));
+    }
+  }
+  // (c) full-size canvas, same device coordinates, no clip, only items touching the stripe;
+  // (d) the same with a canvas as tall as the stripe's bottom edge.
+  {
+    const src3 = `importScripts("${location.origin}/node_modules/vega/build/vega.min.js"); onmessage = e => { const { W, H, items, t0, t1, tall } = e.data; const oc = new OffscreenCanvas(W, tall ? t1 : H), g = oc.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, W, H); const o = {}, sc = { items: [o] }; for (const it of items) { if (it.y + 6 < t0 || it.y - 6 > t1) continue; Object.assign(o, it); vega.Marks.symbol.draw(g, sc, null); } const b = oc.transferToImageBitmap(); postMessage(b, [b]); };`;
+    const w3 = new Worker(URL.createObjectURL(new Blob([src3], { type: "text/javascript" })));
+    for (const tall of [false, true]) {
+      const [c, g] = white();
+      for (let q = 0; q < 8; q++) {
+        const t0 = q * H / 8, t1 = (q + 1) * H / 8;
+        const bmp = await new Promise(r => { w3.onmessage = e => r(e.data); w3.postMessage({ W, H, items, t0, t1, tall }); });
+        g.drawImage(bmp, 0, t0, W, t1 - t0, 0, t0, W, t1 - t0);
+      }
+      out[tall ? "d_tallToStripe" : "c_fullSameCoords"] = cmp(data(g));
+    }
+  }
+  // Does drawing an image change how later paths are rasterized?
+  const tiny = new OffscreenCanvas(1, 1); tiny.getContext("2d").fillRect(0, 0, 0, 0);
+  const tinyBmp = await createImageBitmap(tiny);
+  const tinyCanvas = document.createElement("canvas"); tinyCanvas.width = tinyCanvas.height = 1;
+  for (const [name, pre] of [["afterBitmap", g => g.drawImage(tinyBmp, 0, 0)], ["afterOffscreen", g => g.drawImage(tiny, 0, 0)],
+      ["afterCanvas", g => g.drawImage(tinyCanvas, 0, 0)], ["afterPut", g => g.putImageData(new ImageData(1, 1), 700, 700)],
+      ["afterBitmapWRF", null]]) {
+    let c, g;
+    if (pre) { [c, g] = white(); pre(g); }
+    else { c = document.createElement("canvas"); c.width = W; c.height = H; g = c.getContext("2d", { willReadFrequently: true }); g.fillStyle = "#fff"; g.fillRect(0, 0, W, H); g.drawImage(tinyBmp, 0, 0); }
+    drawAll(g); out[name] = cmp(data(g));
+  }
+  return out;
+};
+window.ready = true;
+</script>

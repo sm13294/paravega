@@ -1,0 +1,12 @@
+node_modules/
+dist/*
+!dist/paraweb-vega.mjs
+!dist/paraweb-vega.cjs
+data/
+showcase/site/
+demo/mosaic-bundle.js
+demo/falcon-bundle.js
+src/runtime/workerlib.generated.ts
+benchmark-results/vega/crossfilter-*.json
+.DS_Store
+*.log

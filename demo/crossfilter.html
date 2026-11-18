@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ParaWeb Vega Crossfilter</title>
+<style>
+  :root { --fg: #1f2328; --muted: #656d76; --line: #d0d7de; --bg: #ffffff; --accent: #4c78a8; }
+  body { font: 14px/1.45 system-ui, -apple-system, Segoe UI, sans-serif; color: var(--fg); background: var(--bg); margin: 24px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.sub { color: var(--muted); margin: 0 0 16px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 16px; }
+  label { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); gap: 4px; }
+  select, button { font: inherit; padding: 4px 8px; }
+  button { border: 1px solid var(--line); background: #f6f8fa; border-radius: 6px; cursor: pointer; }
+  #status { font-variant-numeric: tabular-nums; color: var(--muted); margin: 8px 0 12px; min-height: 1.4em; }
+  #log { font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; color: var(--muted); }
+  #view { overflow-x: auto; }
+</style>
+</head>
+<body>
+<h1>Parallel Vega: crossfilter</h1>
+<p class="sub">Drag on a histogram to brush; double-click to clear. Every histogram is filtered by the other brushes.</p>
+<div class="controls">
+  <label>Backend
+    <select id="mode">
+      <option value="auto-preagg">ParaVega operators, stock spec (exact pre-aggregation)</option>
+      <option value="auto">ParaVega operators, stock spec</option>
+      <option value="preagg">ParaWeb (columnar table, exact pre-aggregation)</option>
+      <option value="table">ParaWeb (columnar table)</option>
+      <option value="gpu">ParaWeb WebGPU (columnar table)</option>
+      <option value="tuples">ParaWeb (Vega tuples)</option>
+      <option value="inline">Fused kernel, main thread (no workers)</option>
+      <option value="crossfilter">Vega crossfilter transform</option>
+      <option value="mosaic">Mosaic + DuckDB-WASM (pre-aggregation)</option>
+      <option value="mosaic-noconsol">Mosaic + DuckDB-WASM (pre-aggregation, no frame batching)</option>
+      <option value="mosaic-nopreagg">Mosaic + DuckDB-WASM (no pre-aggregation)</option>
+      <option value="falcon-arrow">Falcon (ArrowDB, main thread)</option>
+      <option value="falcon-duckdb">Falcon + DuckDB-WASM</option>
+      <option value="stock">Stock Vega (filter + bin + aggregate)</option>
+    </select>
+  </label>
+  <label>Rows
+    <select id="n">
+      <option value="100000">100K</option>
+      <option value="1000000" selected>1M</option>
+      <option value="5000000">5M</option>
+      <option value="10000000">10M</option>
+    </select>
+  </label>
+  <label>Workers <select id="threads"></select></label>
+  <button id="load">Load</button>
+  <button id="sweep">Benchmark brush</button>
+</div>
+<div id="status"></div>
+<div id="view"></div>
+<div id="log"></div>
+
+<script>
+  // Vega 6 by default; ?vega=5 loads Vega 5.33 (and Vega-Lite 5.23), installed as vega5 / vega-lite5.
+  window.PW_VEGA5 = new URLSearchParams(location.search).get("vega") === "5";
+  document.write('<script src="/node_modules/' + (PW_VEGA5 ? "vega5" : "vega") + '/build/vega.min.js"><\/script>');
+</script>
+<script type="module">
+import { registerParaweb, inlineWorkerFactory, resolveBin } from "../dist/paraweb-vega.mjs";
+import { crossfilterSpec, columnsToTuples, FIELDS as FIELDS3, WIDE_FIELDS, W } from "./crossfilterSpec.js";
+import { getDataset } from "./datasets.js";
+
+const $ = id => document.getElementById(id);
+const cores = navigator.hardwareConcurrency || 4;
+for (const t of [1, 2, 4, 8, 12, 16, 24, 32].filter(t => t <= Math.max(cores, 16))) {
+  $("threads").add(new Option(String(t), String(t), false, t === Math.min(cores, 16)));
+}
+
+let handle = null, view = null, lastStats = null, mosaic = null, falcon = null, builds = [];
+/** Resolves when the dashboard reflects the latest signal values (overridden for Mosaic). */
+let settle = () => view.runAsync();
+const cache = { key: "", cols: null, tuples: null, bins: null };
+/**
+ * Dashboards: "three" = three linked histograms (both data sets); "wide" =
+ * six linked histograms plus mean arrival delay by departure hour, filtered
+ * by every brush (flights only).
+ */
+const DASHBOARDS = {
+  three: { fields: FIELDS3, mean: null },
+  wide: { fields: WIDE_FIELDS, mean: { x: "time", y: "delay", maxbins: 24 } },
+};
+let FIELDS = FIELDS3, MEAN = null, mode0 = "";
+
+async function columnsFor(n, dataset) {
+  const key = `${dataset}:${n}:${FIELDS.join(",")}`;
+  if (cache.key !== key) {
+    const d = await getDataset(dataset, n, FIELDS);
+    Object.assign(cache, { key, cols: d.cols, bins: d.bins, tuples: null });
+  }
+  return cache.cols;
+}
+function tuplesFor() {
+  if (!cache.tuples) cache.tuples = columnsToTuples(cache.cols);
+  return cache.tuples;
+}
+
+async function load({ mode, n, threads, dataset = "synthetic", dashboard = "three" }) {
+  ({ fields: FIELDS, mean: MEAN } = DASHBOARDS[dashboard]);
+  mode0 = mode;
+  if (view) { view.finalize(); view = null; }
+  if (handle) { handle.terminate(); handle = null; }
+  const cols = await columnsFor(n, dataset);
+  const t0 = performance.now();
+  let tuples = null;
+  const isMosaic = mode.startsWith("mosaic");
+  const isFalcon = mode.startsWith("falcon");
+  const columnar = mode === "table" || mode === "preagg" || mode === "inline" || mode === "gpu" || isMosaic || isFalcon;
+  builds = [];
+  if (!columnar) tuples = tuplesFor();
+  settle = () => view.runAsync();
+  mosaic = null;
+  falcon = null;
+  const tTuples = performance.now() - t0;
+  // "auto", "auto-preagg": the stock specification, unchanged, on ParaVega's
+  // parallel forms of Vega's operators.
+  const isAuto = mode === "auto" || mode === "auto-preagg";
+  if (isAuto) {
+    handle = registerParaweb(vega, {
+      threads, preaggregate: mode === "auto-preagg",
+      onStats: s => { lastStats = s; },
+      onPreaggBuild: b => builds.push(b),
+      onFallback: (t, r) => console.warn("paraweb-vega fallback:", t, r),
+    });
+  } else if (mode === "tuples" || (columnar && !isMosaic && !isFalcon)) {
+    const o = mode === "inline" ? { threads: 1, workerFactory: inlineWorkerFactory() } : { threads };
+    handle = registerParaweb(vega, {
+      ...o, operators: false, preaggregate: mode === "preagg", gpu: mode === "gpu",
+      onStats: s => { lastStats = s; },
+      onPreaggBuild: b => builds.push(b),
+    });
+    if (columnar) handle.registerTable("flights", cols);
+    await handle.ready;
+    if (mode === "gpu" && !handle.gpu) throw new Error("WebGPU backend unavailable");
+  }
+  const specMode = isMosaic || isFalcon ? "external" : mode === "preagg" || mode === "gpu" ? "table" : isAuto ? "stock" : mode;
+  const spec = crossfilterSpec(specMode, cache.bins, FIELDS, { mean: MEAN });
+  if (tuples) spec.data[0].values = tuples;
+  const t1 = performance.now();
+  view = new vega.View(vega.parse(spec), { renderer: "canvas", container: $("view"), hover: false });
+  await view.runAsync();
+  if (isMosaic) {
+    const { setupMosaic } = await import("./mosaic-bundle.js");
+    const bins = {};
+    for (const f of FIELDS) bins[f] = { ...resolveBin(cache.bins[f], cache.bins[f].extent), extent: cache.bins[f].extent };
+    const meanOpt = MEAN && { ...MEAN, rb: resolveBin({ extent: cache.bins[MEAN.x].extent, maxbins: MEAN.maxbins }, cache.bins[MEAN.x].extent) };
+    mosaic = await setupMosaic({ view, vega, columns: cols, fields: FIELDS, mean: meanOpt, bins, width: W, preagg: mode !== "mosaic-nopreagg", consolidate: mode !== "mosaic-noconsol", threads });
+    settle = mosaic.settle;
+  }
+  if (isFalcon) {
+    const { setupFalcon } = await import("./falcon-bundle.js");
+    const bins = {};
+    for (const f of FIELDS) bins[f] = { ...resolveBin(cache.bins[f], cache.bins[f].extent), extent: cache.bins[f].extent };
+    falcon = await setupFalcon({ view, vega, columns: cols, fields: FIELDS, bins, width: W, engine: mode === "falcon-arrow" ? "arrow" : "duckdb", threads });
+    settle = falcon.settle;
+  }
+  const init = performance.now() - t1;
+  return { init, tuples: tTuples };
+}
+
+const median = a => { const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
+
+/** Sequential brush moves: each waits for the previous render. */
+async function sweep(steps = 20) {
+  const lat = [];
+  for (let s = 0; s < steps; s++) {
+    const a = 10 + (s * 190) / steps;
+    const t = performance.now();
+    view.signal("distance_px", [a, a + 90]);
+    await settle();
+    lat.push(performance.now() - t);
+  }
+  view.signal("distance_px", null); await settle();
+  return lat;
+}
+
+/** Random brush positions (deterministic): large deltas between updates. */
+async function jumps(steps = 20) {
+  let seed = 12345;
+  const rand = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const lat = [];
+  for (let s = 0; s < steps; s++) {
+    const a = rand() * 220, w = 20 + rand() * 60;
+    const t = performance.now();
+    view.signal("distance_px", [a, a + w]);
+    await settle();
+    lat.push(performance.now() - t);
+  }
+  view.signal("distance_px", null); await settle();
+  return lat;
+}
+
+/**
+ * Simulated drag: brush updates at 60 Hz for `ms` milliseconds without
+ * waiting for results (as pointer events would arrive). Reports frame gaps
+ * seen by requestAnimationFrame, long tasks, and time to settle.
+ */
+async function drag(ms = 1000) {
+  const longTasks = [];
+  let obs = null;
+  try {
+    obs = new PerformanceObserver(list => { for (const e of list.getEntries()) longTasks.push(e.duration); });
+    obs.observe({ type: "longtask", buffered: false });
+  } catch {}
+  const frames = [];
+  let rafOn = true;
+  // performance.now(), not the callback's timestamp: after a long busy period, the first
+  // callback can receive a stale frame time, which made the first gap span the time before the drag.
+  const loop = () => { frames.push(performance.now()); if (rafOn) requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+  await nextFrame();
+
+  const t0 = performance.now();
+  let k = 0, issued = 0;
+  await new Promise(resolve => {
+    const id = setInterval(() => {
+      const a = 10 + (k++ * 3) % 190;
+      view.signal("time_px", [a, a + 60]);
+      view.runAsync();
+      issued++;
+      if (performance.now() - t0 >= ms) { clearInterval(id); resolve(); }
+    }, 16);
+  });
+  const tLast = performance.now();
+  await settle();
+  const settleMs = performance.now() - tLast;
+  await nextFrame();
+  rafOn = false;
+  if (obs) obs.disconnect();
+
+  const gaps = [];
+  for (let i = 1; i < frames.length; i++) gaps.push(frames[i] - frames[i - 1]);
+  const elapsed = frames[frames.length - 1] - frames[0];
+  view.signal("time_px", null); await settle();
+  return {
+    issued,
+    settleMs,
+    fps: (frames.length - 1) / (elapsed / 1000),
+    maxFrameGapMs: Math.max(...gaps),
+    longTaskCount: longTasks.length,
+    blockingMs: longTasks.reduce((s, d) => s + Math.max(0, d - 50), 0),
+  };
+}
+
+/** Entry point for the puppeteer driver. */
+window.pwBench = async ({ mode, n, threads, dataset = "synthetic", dashboard = "three", steps = 20, warmup = 3, dragMs = 1000 }) => {
+  const loadInfo = await load({ mode, n, threads, dataset, dashboard });
+  // Sanity check: the unfiltered histogram must account for every row.
+  const rowsSeen = view.data("bg_distance").reduce((s, r) => s + r.count, 0);
+  // Falcon's engines handle values outside the bin range differently from
+  // Vega (which puts them in -Inf / +Inf bins) and from each other (ArrowDB
+  // clamps them into the edge bins, the SQL engine drops some), so for
+  // Falcon the dashboard total must lie between the in-range count and n.
+  let rowsRange = [n, n];
+  if (mode.startsWith("falcon")) {
+    const rb = resolveBin(cache.bins.distance, cache.bins.distance.extent), c = cache.cols.distance;
+    let inRange = 0;
+    for (let i = 0; i < n; i++) if (c[i] >= rb.start && c[i] <= rb.stop) inRange++;
+    rowsRange = [inRange, n];
+  }
+  // First interaction on a fresh dashboard: includes any lazy index build
+  // (Mosaic pre-aggregation) or kernel compilation (ParaWeb).
+  let tf = performance.now();
+  view.signal("distance_px", [60, 150]);
+  await settle();
+  const firstBrushMs = performance.now() - tf;
+  // The second move of the same brush waits for any index build started by the first.
+  tf = performance.now();
+  view.signal("distance_px", [70, 160]);
+  await settle();
+  const secondBrushMs = performance.now() - tf;
+  view.signal("distance_px", null); await settle();
+  await sweep(warmup);
+  const lat = await sweep(steps);
+  const jl = await jumps(steps);
+  const d = await drag(dragMs);
+  return {
+    dataset, dashboard, meanView: !!MEAN && !mode.startsWith("falcon"), mode, n, threads: mode === "inline" || mode === "stock" || mode === "crossfilter" ? 1 : threads,
+    initMs: loadInfo.init, tupleBuildMs: loadInfo.tuples, firstBrushMs, secondBrushMs,
+    preaggBuilds: builds.slice(), rowsSeen, rowsRange,
+    falcon: falcon && { loadMs: falcon.loadMs, engine: falcon.engine, threaded: falcon.threaded, threadSetting: falcon.threadSetting, activations: falcon.stats.activations, activateMs: falcon.stats.activateMs.slice(), timeouts: falcon.stats.timeouts },
+    mosaic: mosaic && { loadMs: mosaic.loadMs, threaded: mosaic.threaded, threadSetting: mosaic.threadSetting, ...mosaic.stats },
+    brushMedianMs: median(lat), brushMinMs: Math.min(...lat), brushMaxMs: Math.max(...lat), brushAll: lat,
+    jumpMedianMs: median(jl), jumpMaxMs: Math.max(...jl), jumpAll: jl,
+    drag: d,
+  };
+};
+/** Test hook: apply brushes (pixel ranges) and return the filtered histograms. */
+window.pwHistograms = async brushes => {
+  for (const f of FIELDS) view.signal(`${f}_px`, brushes[f] ?? null);
+  await settle();
+  const out = {};
+  for (const f of FIELDS) {
+    out[f] = view.data(`h_${f}`).filter(r => r.count > 0).map(r => [r.bin0 ?? r[`${f}0`], r.count]).sort((a, b) => a[0] - b[0]);
+  }
+  // Means are compared with a relative tolerance by the test (both paths sum
+  // in a different order).
+  if (MEAN && !mode0.startsWith("falcon")) out.mean = view.data("m_mean").filter(r => r.mean != null)
+    .map(r => [r.bin0, r.mean]).sort((a, b) => a[0] - b[0]);
+  return out;
+};
+window.pwReady = true;
+
+function opts() { return { mode: $("mode").value, n: +$("n").value, threads: +$("threads").value }; }
+function setStatus(s) { $("status").textContent = s; }
+
+$("load").onclick = async () => {
+  const o = opts();
+  setStatus(`loading ${o.n.toLocaleString()} rows...`);
+  try {
+    const r = await load(o);
+    setStatus(`${o.mode}: initial render ${r.init.toFixed(0)} ms` + (o.mode !== "table" ? ` (tuple build ${r.tuples.toFixed(0)} ms)` : ""));
+    const show = () => {
+      if (!lastStats || o.mode === "stock") return;
+      const how = lastStats.path === "index"
+        ? `from pre-aggregate, ${lastStats.boundaryRows} edge rows scanned`
+        : `scan on ${lastStats.threads} workers, merge ${lastStats.mergeMode}`;
+      setStatus(`last pwaggregate: ${lastStats.ms.toFixed(2)} ms (${how}, ${lastStats.groups} groups)`);
+    };
+    for (const f of ["distance", "delay", "time"]) view.addSignalListener(`${f}_range`, () => setTimeout(show, 0));
+  } catch (e) { setStatus("error: " + e.message); console.error(e); }
+};
+$("sweep").onclick = async () => {
+  if (!view) await $("load").onclick();
+  setStatus("benchmarking...");
+  const lat = await sweep(20);
+  const d = await drag(1000);
+  setStatus(`brush latency median ${median(lat).toFixed(1)} ms; drag: ${d.fps.toFixed(0)} fps, max frame gap ${d.maxFrameGapMs.toFixed(0)} ms, settle ${d.settleMs.toFixed(0)} ms`);
+};
+
+if (!crossOriginIsolated) setStatus("Not cross-origin isolated: serve with node bench/serve.cjs");
+else $("load").onclick();
+</script>
+</body>
+</html>

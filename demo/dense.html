@@ -1,0 +1,234 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ParaVega dense marks</title>
+<style>
+  body { font: 13px system-ui, sans-serif; margin: 16px; background: #fff; color: #222; }
+  .view { margin: 8px 0; }
+</style>
+</head>
+<body>
+<div id="out"></div>
+<script>
+  // Vega 6 by default; ?vega=5 loads Vega 5.33 (and Vega-Lite 5.23), installed as vega5 / vega-lite5.
+  window.PW_VEGA5 = new URLSearchParams(location.search).get("vega") === "5";
+  document.write('<script src="/node_modules/' + (PW_VEGA5 ? "vega5" : "vega") + '/build/vega.min.js"><\/script>');
+</script>
+<script>
+  document.write('<script src="/node_modules/' + (PW_VEGA5 ? "vega-lite5" : "vega-lite") + '/build/vega-lite.min.js"><\/script>');
+</script>
+<script type="module">
+import { registerParaweb } from "../dist/paraweb-vega.mjs";
+import { SPECS, makeRows, compile } from "./denseSpecs.js";
+
+const out = document.getElementById("out");
+const apply = (view, u) => { for (const [k, v] of Object.entries(u)) k.startsWith("data:") ? view.data(k.slice(5), v) : view.signal(k, v); };
+
+async function makeView(def, rows) {
+  const spec = compile(vega, vegaLite, def);
+  spec.data.find(d => d.name === "d").values = rows;
+  const el = document.createElement("div");
+  el.className = "view";
+  out.appendChild(el);
+  const view = new vega.View(vega.parse(spec), { renderer: "canvas", container: el, hover: false });
+  return { view, el };
+}
+
+/**
+ * Canvas pixels after a full redraw of the scenegraph. Vega redraws only the
+ * dirty region after an update, and Chrome's antialiasing depends on the
+ * clip, so both sides are redrawn in full before they are compared.
+ */
+const tiny = document.createElement("canvas");
+tiny.width = tiny.height = 1;
+function pixels(el, view, perturb) {
+  if (view) {
+    view._renderer._redraw = true;
+    if (perturb) {
+      // Chrome's own variation: the same scene after one extra (invisible) draw call.
+      const r = view._renderer, render = r._render;
+      r._render = function (scene, types) {
+        const g = this.context();
+        const clear = this.clear;
+        this.clear = function (...a) { clear.apply(this, a); g.drawImage(tiny, -10, -10); };
+        try { return render.call(this, scene, types); } finally { this.clear = clear; }
+      };
+      try { r.render(view.scenegraph().root); } finally { r._render = render; }
+    } else view._renderer.render(view.scenegraph().root);
+  }
+  const c = el.querySelector("canvas");
+  canvasWidth = c.width;
+  lastSize = [c.width, c.height];
+  return c.getContext("2d").getImageData(0, 0, c.width, c.height).data.slice();
+}
+
+function symbolMarks(view) {
+  const res = [];
+  const walk = (s, ox, oy) => {
+    if (s.marktype === "symbol" && s.role === "mark") res.push({ mark: s, ox, oy });
+    for (const it of s.items || []) if (it.items) for (const m of it.items) walk(m, ox + (it.x || 0), oy + (it.y || 0));
+  };
+  walk(view.scenegraph().root, 0, 0);
+  return res;
+}
+
+/** Datum fields of what a click at canvas CSS pixel (px, py) picks. */
+async function pickAt(view, el, px, py) {
+  const c = el.querySelector("canvas"), r = c.getBoundingClientRect();
+  let hit = null;
+  const h = (e, item) => { hit = item && item.datum && item.mark.marktype === "symbol" ? { x: item.datum.x, y: item.datum.y, c: item.datum.c } : null; };
+  view.addEventListener("pointermove", h);
+  // Vega's canvas handler picks the item under the pointer on pointer moves.
+  const at = { clientX: r.left + px, clientY: r.top + py, bubbles: true, pointerId: 1, pointerType: "mouse" };
+  c.dispatchEvent(new PointerEvent("pointermove", at));
+  view.removeEventListener("pointermove", h);
+  return hit;
+}
+
+let canvasWidth = 0;
+let lastSize = null;
+function diff(a, b) {
+  if (a.length !== b.length) return { size: true, sizes: [a.length / 4, b.length / 4, lastSize] };
+  // Premultiplied colors and alpha: the unpremultiplied color of a nearly transparent pixel is noise.
+  const pm = (x, i, k) => (k === 3 ? x[i + 3] : (x[i + k] * x[i + 3]) / 255);
+  let px = 0, max = 0, over32 = 0, sum = 0;
+  const hist = new Array(9).fill(0), rows = new Map(), samples = [];
+  for (let i = 0; i < a.length; i += 4) {
+    let d = 0;
+    for (let k = 0; k < 4; k++) d = Math.max(d, Math.abs(pm(a, i, k) - pm(b, i, k)));
+    for (let k = 0; k < 3; k++) sum += Math.abs(pm(a, i, k) - pm(b, i, k));
+    if (d > 32) over32++;
+    if (d) {
+      px++; if (d > max) max = d;
+      hist[Math.min(8, Math.floor(Math.log2(d)))]++;
+      const y = Math.floor(i / 4 / canvasWidth);
+      rows.set(y, (rows.get(y) || 0) + 1);
+      if (samples.length < 6 && d > 8) samples.push([i / 4 % canvasWidth, y, [...a.slice(i, i + 4)], [...b.slice(i, i + 4)]]);
+    }
+  }
+  const topRows = [...rows].sort((p, q) => q[1] - p[1]).slice(0, 8);
+  // PSNR over premultiplied RGBA, and the largest difference of 4x4 block means (structure, not antialiasing).
+  let se = 0;
+  for (let i = 0; i < a.length; i += 4) for (let k = 0; k < 4; k++) { const e = pm(a, i, k) - pm(b, i, k); se += e * e; }
+  const mse = se / a.length;
+  const psnr = mse === 0 ? Infinity : 10 * Math.log10((255 * 255) / mse);
+  const W = canvasWidth, H = a.length / 4 / W;
+  let block = 0, blockAt = null;
+  for (let by = 0; by + 4 <= H; by += 4) for (let bx = 0; bx + 4 <= W; bx += 4) for (let k = 0; k < 4; k++) {
+    let sa = 0, sb = 0;
+    for (let y = by; y < by + 4; y++) for (let x = bx; x < bx + 4; x++) { const i = 4 * (y * W + x); sa += pm(a, i, k); sb += pm(b, i, k); }
+    const dd = Math.abs(sa - sb) / 16;
+    if (dd > block) { block = dd; blockAt = [bx, by]; }
+  }
+  return { px, max, over32, mean: sum / (3 * a.length / 4), psnr, block, blockAt, total: a.length / 4, hist, topRows, samples };
+}
+
+window.pwCheck = async ({ spec: name, n, threads }) => {
+  const def = SPECS[name];
+  const rows = makeRows(n);
+  const K = def.updates.length;
+  // Stock Vega, updated through the same states.
+  const refs = [], base = [];
+  let points = [], refPicks = [], refPicksLast = [];
+  {
+    const { view, el } = await makeView(def, rows.map(t => ({ ...t })));
+    await view.runAsync();
+    refs.push(pixels(el, view));
+    base.push(diff(refs[0], pixels(el, view, true)));
+    window._dbg = { stock: { origin: view.origin(), b: symbolMarks(view).map(m => [m.mark.bounds.x1, m.mark.bounds.y1, m.mark.bounds.x2, m.mark.bounds.y2, m.ox, m.oy]) } };
+    const o = view.origin();
+    for (const { mark, ox, oy } of symbolMarks(view)) {
+      const items = mark.items;
+      for (let q = 0; q < 25 && items.length; q++) {
+        const it = items[Math.floor((q * items.length) / 25)];
+        points.push([it.x + ox + o[0], it.y + oy + o[1]]);
+      }
+    }
+    for (let q = 0; q < 10; q++) points.push([7 + 37 * q, 11 + 29 * q]);
+    for (const [x, y] of points) refPicks.push(await pickAt(view, el, x, y));
+    window._orders = [symbolMarks(view).map(m => m.mark.items.map(it => it.datum.x))];
+    for (let k = 1; k <= K; k++) {
+      apply(view, def.updates[k - 1]);
+      await view.runAsync();
+      refs.push(pixels(el, view));
+      base.push(diff(refs[k], pixels(el, view, true)));
+      window._orders.push(symbolMarks(view).map(m => m.mark.items.map(it => it.datum.x)));
+    }
+    for (const [x, y] of points) refPicksLast.push(await pickAt(view, el, x, y));
+    view.finalize(); el.remove();
+  }
+  const fallbacks = [];
+  const pw = registerParaweb(vega, { threads, onFallback: (t, r) => fallbacks.push(t + ": " + r) });
+  const { view, el } = await makeView(def, rows.map(t => ({ ...t })));
+  await view.runAsync();
+  await new Promise(r => setTimeout(r, 50));
+  await view.runAsync();
+  window._dbg.pw = { origin: view.origin(), w: view.width(), h: view.height(), b: symbolMarks(view).map(m => [m.mark.bounds.x1, m.mark.bounds.y1, m.mark.bounds.x2, m.mark.bounds.y2, m.ox, m.oy]),
+    d: symbolMarks(view).filter(m => m.mark._pwDense).map(m => { const d = m.mark._pwDense; return { X0: d.X0, Y0: d.Y0, fx: d.fx, fy: d.fy, s: d.s,
+      stripes: d.stripes && d.stripes.map(([t0, b]) => { const c = document.createElement("canvas"); c.width = b.width; c.height = b.height; const g = c.getContext("2d"); g.drawImage(b, 0, 0); const px = g.getImageData(0, 0, b.width, b.height).data; let nz = 0; for (let i = 3; i < px.length; i += 4) if (px[i]) nz++; return [t0, b.width, b.height, nz]; }) }; }) };
+  const steps = [];
+  const dense = () => symbolMarks(view).map(m => m.mark._pwDense ? m.mark._pwDense.m : -m.mark.items.length);
+  const orderCheck = k => symbolMarks(view).map((m, j) => {
+    const d = m.mark._pwDense, ref = window._orders[k][j];
+    if (!d) return "items";
+    if (d.m !== ref.length) return "len " + d.m + "/" + ref.length;
+    for (let q = 0; q < d.m; q++) if (rows[d.rows[q]].x !== ref[q]) return "first diff at " + q;
+    return "same";
+  }).join(",");
+  steps.push({ ...diff(refs[0], pixels(el, view)), dense: dense(), order: orderCheck(0) });
+  const picks = [];
+  for (const [x, y] of points) picks.push(await pickAt(view, el, x, y));
+  let pickDiff = picks.filter((p, i) => JSON.stringify(p) !== JSON.stringify(refPicks[i])).length;
+  for (let k = 1; k <= K; k++) {
+    apply(view, def.updates[k - 1]);
+    await view.runAsync();
+    steps.push({ ...diff(refs[k], pixels(el, view)), dense: dense(), order: orderCheck(k) });
+  }
+  const picksLast = [];
+  for (const [x, y] of points) picksLast.push(await pickAt(view, el, x, y));
+  pickDiff += picksLast.filter((p, i) => JSON.stringify(p) !== JSON.stringify(refPicksLast[i])).length;
+  view.finalize(); el.remove();
+  pw.terminate();
+  steps.forEach((st, k) => { st.base = { over32: base[k].over32, mean: base[k].mean, max: base[k].max, psnr: base[k].psnr, block: base[k].block }; });
+  return { dbg: window._dbg, steps, picks: 2 * points.length, pickDiff, pickHits: refPicks.filter(Boolean).length + refPicksLast.filter(Boolean).length, fallbacks, dpr: devicePixelRatio };
+};
+
+window.pwBench = async ({ spec: name, mode, n, threads, reps = 9 }) => {
+  const def = SPECS[name];
+  const rows = makeRows(n);
+  const pw = mode === "stock" ? null : registerParaweb(vega, { threads, denseMarks: mode === "paraweb-items" ? false : undefined });
+  const t0 = performance.now();
+  const { view, el } = await makeView(def, rows);
+  await view.runAsync();
+  const initMs = performance.now() - t0;
+  const ms = [];
+  if (def.updates.length) {
+    for (let k = 0; k <= reps; k++) {
+      apply(view, def.updates[k % def.updates.length]);
+      const t = performance.now();
+      await view.runAsync();
+      if (k > 0) ms.push(performance.now() - t);
+    }
+  }
+  ms.sort((a, b) => a - b);
+  const phases = symbolMarks(view).filter(m => m.mark._pwDense).map(m => ({ ...m.mark._pwDense.ms }));
+  view.finalize(); el.remove();
+  if (pw) pw.terminate();
+  return { vega: vega.version, spec: name, mode, n, threads, initMs, updateMs: ms.length ? ms[ms.length >> 1] : null, updateMaxMs: ms.length ? ms[ms.length - 1] : null, phases };
+};
+window.pwShot = async ({ spec: name, n, threads, mode, steps = 0 }) => {
+  const def = SPECS[name];
+  const pw = mode === "stock" ? null : registerParaweb(vega, { threads, denseMarks: mode === "paraweb-items" ? false : undefined });
+  const { view, el } = await makeView(def, makeRows(n));
+  await view.runAsync();
+  for (let k = 0; k < steps; k++) { apply(view, def.updates[k]); await view.runAsync(); }
+  const url = el.querySelector("canvas").toDataURL();
+  view.finalize(); el.remove();
+  if (pw) pw.terminate();
+  return url;
+};
+window.pwReady = true;
+</script>
+</body>
+</html>

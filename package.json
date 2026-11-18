@@ -1,0 +1,64 @@
+{
+  "name": "paravega",
+  "version": "1.0.0",
+  "description": "A parallel runtime for Vega: unchanged Vega and Vega-Lite specifications run on all cores of the browser, built on ParaWeb's parallel programming patterns.",
+  "license": "MIT",
+  "author": "Suejb Memeti",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sm13294/paravega.git"
+  },
+  "homepage": "https://sm13294.github.io/paravega/",
+  "main": "dist/paraweb-vega.cjs",
+  "module": "dist/paraweb-vega.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/paraweb-vega.mjs",
+      "require": "./dist/paraweb-vega.cjs"
+    }
+  },
+  "files": [
+    "dist/paraweb-vega.mjs",
+    "dist/paraweb-vega.cjs",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "postinstall": "node scripts/link-vega5.cjs",
+    "build": "node build.mjs && tsc -p tsconfig.json",
+    "test": "npm run build && node test/operators.cjs && node test/correctness.cjs && node test/filter.cjs && node test/dense.cjs && node test/preagg.cjs",
+    "test:browser": "npm run build && node test/browser/build.mjs && node test/browser/run.cjs correctness && node test/browser/run.cjs operators && node test/browser/run.cjs resident",
+    "serve": "node bench/serve.cjs",
+    "showcase": "npm run build && node showcase/build.mjs",
+    "bench:operators": "node bench/operators-browser.cjs",
+    "bench:campaign": "bash bench/run-campaign.sh"
+  },
+  "dependencies": {
+    "paraweb-js": "github:sm13294/paraweb-js#v1.1.0"
+  },
+  "peerDependencies": {
+    "vega": ">=5.33 <7"
+  },
+  "devDependencies": {
+    "@duckdb/duckdb-wasm": "1.33.1-dev114.0",
+    "@types/node": "^20.19.39",
+    "@uwdata/flechette": "^2.8.1",
+    "@uwdata/mosaic-core": "^0.35.1",
+    "@uwdata/mosaic-sql": "^0.35.1",
+    "@webgpu/types": "^0.1.69",
+    "apache-arrow": "^17.0.0",
+    "esbuild": "^0.28.0",
+    "falcon-vis": "0.17.4",
+    "hyparquet": "^1.33.1",
+    "puppeteer": "^25.9.0",
+    "seedrandom": "^3.0.5",
+    "typescript": "^5.9.3",
+    "vega": "6.4.0",
+    "vega-lite": "6.5.0",
+    "vega-lite5": "npm:vega-lite@5.23.0",
+    "vega5": "npm:vega@5.33.1"
+  }
+}

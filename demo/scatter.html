@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ParaVega Linked Scatterplot</title>
+<style>
+  body { font: 14px/1.45 system-ui, -apple-system, Segoe UI, sans-serif; color: #1f2328; background: #fff; margin: 24px; }
+  h1 { font-size: 18px; margin: 0 0 12px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 12px; }
+  label { display: flex; flex-direction: column; font-size: 12px; color: #656d76; gap: 4px; }
+  #status { color: #656d76; margin: 8px 0 12px; min-height: 1.4em; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<h1>Parallel Vega: linked scatterplot</h1>
+<div class="controls">
+  <label>Backend <select id="mode">
+    <option value="pwfilter-table">ParaWeb pwfilter (columnar table)</option>
+    <option value="pwfilter-tuples">ParaWeb pwfilter (Vega tuples)</option>
+    <option value="stock">Stock Vega filter</option>
+  </select></label>
+  <label>Rows <select id="n"><option value="100000">100K</option><option value="1000000" selected>1M</option><option value="5000000">5M</option><option value="10000000">10M</option></select></label>
+  <label>Workers <select id="threads"><option>1</option><option>4</option><option selected>16</option></select></label>
+  <button id="load">Load</button>
+</div>
+<div id="status"></div>
+<div id="view"></div>
+<script>
+  // Vega 6 by default; ?vega=5 loads Vega 5.33 (and Vega-Lite 5.23), installed as vega5 / vega-lite5.
+  window.PW_VEGA5 = new URLSearchParams(location.search).get("vega") === "5";
+  document.write('<script src="/node_modules/' + (PW_VEGA5 ? "vega5" : "vega") + '/build/vega.min.js"><\/script>');
+</script>
+<script type="module">
+import { registerParaweb } from "../dist/paraweb-vega.mjs";
+import { scatterSpec } from "./scatterSpec.js";
+import { columnsToTuples } from "./crossfilterSpec.js";
+import { getDataset } from "./datasets.js";
+
+const $ = id => document.getElementById(id);
+let handle = null, view = null, compute = [];
+const cache = { key: "" };
+
+async function load({ mode, n, threads, dataset = "synthetic" }) {
+  if (view) { view.finalize(); view = null; }
+  if (handle) { handle.terminate(); handle = null; }
+  if (cache.key !== `${dataset}:${n}`) {
+    const d = await getDataset(dataset, n);
+    Object.assign(cache, { key: `${dataset}:${n}`, cols: d.cols, bins: d.bins, tuples: null });
+  }
+  const tuples = mode === "pwfilter-table" ? null : (cache.tuples ??= columnsToTuples(cache.cols));
+  if (mode !== "stock") {
+    handle = registerParaweb(vega, { threads, operators: false, onStats: s => { if (s.name === "sel") compute.push(s.ms); } });
+    if (mode === "pwfilter-table") handle.registerTable("flights", cache.cols);
+  }
+  const spec = scatterSpec(mode, cache.bins);
+  if (tuples) spec.data[0].values = tuples;
+  const t0 = performance.now();
+  view = new vega.View(vega.parse(spec), { renderer: "canvas", container: $("view"), hover: false });
+  await view.runAsync();
+  return performance.now() - t0;
+}
+
+const median = a => { const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
+
+async function moves(positions, width) {
+  const lat = [], sel = [], comp = [];
+  for (const a of positions) {
+    compute = [];
+    const t = performance.now();
+    view.signal("time_px", [a, a + width]);
+    await view.runAsync();
+    lat.push(performance.now() - t);
+    sel.push(view.data("sel").length);
+    if (compute.length) comp.push(compute.reduce((s, x) => s + x, 0));
+  }
+  return { lat, sel, comp };
+}
+
+async function drag(ms, width) {
+  const frames = [];
+  let on = true;
+  // performance.now(), not the callback's timestamp: after a long busy period, the first
+  // callback can receive a stale frame time, which made the first gap span the time before the drag.
+  const loop = () => { frames.push(performance.now()); if (on) requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+  await nextFrame();
+  const t0 = performance.now();
+  let k = 0;
+  await new Promise(resolve => {
+    const id = setInterval(() => {
+      const a = 10 + (k++ * 2) % 280;
+      view.signal("time_px", [a, a + width]);
+      view.runAsync();
+      if (performance.now() - t0 >= ms) { clearInterval(id); resolve(); }
+    }, 16);
+  });
+  const tl = performance.now();
+  await view.runAsync();
+  const settleMs = performance.now() - tl;
+  await nextFrame();
+  on = false;
+  const gaps = frames.slice(1).map((f, i) => f - frames[i]);
+  return { fps: (frames.length - 1) / ((frames[frames.length - 1] - frames[0]) / 1000), maxFrameGapMs: Math.max(...gaps), settleMs };
+}
+
+window.pwScatterBench = async ({ mode, n, threads, dataset = "synthetic", steps = 20, warmup = 3, width = 3, dragMs = 1000 }) => {
+  const initMs = await load({ mode, n, threads, dataset });
+  const rowsSeen = view.data("hist").reduce((s, r) => s + r.count, 0);
+  let seed = 7;
+  const rand = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  await moves(Array.from({ length: warmup }, (_, i) => 50 + i * 5), width);
+  const sweep = await moves(Array.from({ length: steps }, (_, i) => 40 + i * 8), width);
+  const jump = await moves(Array.from({ length: steps }, () => rand() * (300 - width)), width);
+  const d = await drag(dragMs, width);
+  view.signal("time_px", null); await view.runAsync();
+  return {
+    suite: "scatter", dataset, mode, n, threads: mode === "stock" ? 1 : threads, initMs, rowsSeen,
+    brushMedianMs: median(sweep.lat), jumpMedianMs: median(jump.lat),
+    computeMedianMs: sweep.comp.length ? median(sweep.comp) : null,
+    selectedMedian: median(sweep.sel), selectedJumpMedian: median(jump.sel),
+    firstBrushMs: sweep.lat[0], secondBrushMs: sweep.lat[1],
+    drag: d,
+  };
+};
+window.pwReady = true;
+
+$("load").onclick = async () => {
+  const o = { mode: $("mode").value, n: +$("n").value, threads: +$("threads").value };
+  $("status").textContent = "loading...";
+  const ms = await load(o);
+  $("status").textContent = `${o.mode}: ready in ${ms.toFixed(0)} ms; drag on the histogram`;
+  view.addSignalListener("time_range", () => setTimeout(() => {
+    $("status").textContent = `${view.data("sel").length.toLocaleString()} rows selected` + (compute.length ? `; pwfilter ${compute[compute.length - 1].toFixed(2)} ms` : "");
+  }, 0));
+};
+// Interactive use only: under a benchmark driver this load would overlap the first measured one.
+if (crossOriginIsolated && !navigator.webdriver) $("load").onclick();
+</script>
+</body>
+</html>

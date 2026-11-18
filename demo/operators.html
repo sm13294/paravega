@@ -1,0 +1,117 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ParaVega operator benchmark</title>
+<style>body { font: 13px system-ui, sans-serif; margin: 16px; background: #fff; color: #222; }</style>
+</head>
+<body>
+<div id="out"></div>
+<script>
+  // Vega 6 by default; ?vega=5 loads Vega 5.33 (and Vega-Lite 5.23), installed as vega5 / vega-lite5.
+  window.PW_VEGA5 = new URLSearchParams(location.search).get("vega") === "5";
+  document.write('<script src="/node_modules/' + (PW_VEGA5 ? "vega5" : "vega") + '/build/vega.min.js"><\/script>');
+</script>
+<script>
+  document.write('<script src="/node_modules/' + (PW_VEGA5 ? "vega-lite5" : "vega-lite") + '/build/vega-lite.min.js"><\/script>');
+</script>
+<script type="module">
+import { registerParaweb, inlineWorkerFactory } from "../dist/paraweb-vega.mjs";
+import { SPECS, makeRows } from "./operatorSpecs.js";
+
+const out = document.getElementById("out");
+
+/** Memory of the page: all of it (workers and shared memory included) when the page is isolated, else the main heap. */
+async function memory() {
+  if (crossOriginIsolated && performance.measureUserAgentSpecificMemory) {
+    try { const m = await performance.measureUserAgentSpecificMemory(); return { bytes: m.bytes, kind: "all" }; } catch { /* fall through */ }
+  }
+  return performance.memory ? { bytes: performance.memory.usedJSHeapSize, kind: "main heap" } : null;
+}
+
+/**
+ * One configuration in a fresh page: time to the first rendered view, the
+ * first interaction, and the median, p95 and maximum of the following ones,
+ * each until the canvas is drawn.
+ */
+window.pwOp = async ({ spec: name, mode, n, threads, reps = 9, keep = false }) => {
+  const def = await SPECS[name]();
+  const spec = def.vl ? vegaLite.compile(def.vl).spec : JSON.parse(JSON.stringify(def.spec));
+  const fallbacks = [];
+  let concurrent = 0;
+  // Modes as in bench/operators.cjs: paraweb (Farm loop), paraweb-seq (Vega's sequential loop),
+  // paraweb-inline (the same kernels and columns on the main thread, no workers), paraweb-index.
+  const pw = mode === "stock" ? null : registerParaweb(vega, {
+    threads, preaggregate: mode === "paraweb-index", farm: mode !== "paraweb-seq",
+    ...(mode === "paraweb-inline" ? { threads: 1, workerFactory: inlineWorkerFactory() } : {}),
+    onFarmStats: s => { concurrent = Math.max(concurrent, s.maxConcurrent); },
+    onFallback: (t, r) => fallbacks.push(`${t}: ${r}`) });
+  spec.data.find(d => d.name === def.source).values = makeRows(n);
+  const el = document.createElement("div");
+  out.appendChild(el);
+  let t0 = performance.now();
+  const view = new vega.View(vega.parse(spec), { renderer: "canvas", container: el, hover: false });
+  await view.runAsync();
+  const initMs = performance.now() - t0;
+  const apply = u => { for (const [k, v] of Object.entries(u)) k.startsWith("data:") ? view.data(k.slice(5), v) : view.signal(k, v); };
+  const ms = [];
+  let firstMs = 0;
+  for (let k = 0; k <= reps; k++) {
+    apply(def.updates(k));
+    t0 = performance.now();
+    await view.runAsync();
+    const d = performance.now() - t0;
+    if (k > 0) ms.push(d); else firstMs = d;
+  }
+  ms.sort((a, b) => a - b);
+  const q = p => ms[Math.min(ms.length - 1, Math.ceil(p * ms.length) - 1)];
+  const mem = await memory();
+  // Checksum of every data set except the source and stores, as in bench/operators.cjs: the exact
+  // sum of all numbers (Shewchuk), independent of row order. Taken after the timings and memory.
+  const checksum = v => {
+    const partials = [];
+    const add = x => {
+      let i = 0;
+      for (let j = 0; j < partials.length; j++) {
+        let y = partials[j];
+        if (Math.abs(x) < Math.abs(y)) { const t = x; x = y; y = t; }
+        const hi = x + y, lo = y - (hi - x);
+        if (lo) partials[i++] = lo;
+        x = hi;
+      }
+      partials.length = i;
+      partials.push(x);
+    };
+    for (const d of spec.data) {
+      if (d.name === def.source || d.name.endsWith("_store")) continue;
+      for (const t of v.data(d.name)) for (const x of Object.values(t)) if (typeof x === "number" && Number.isFinite(x)) add(x);
+    }
+    return partials.reduce((a, b) => a + b, 0);
+  };
+  // Checksums, the fresh stock view, and teardown. With keep, pwOp returns first, so that the
+  // driver reads the memory of the renderer process while the view is alive and nothing else
+  // has been allocated; the driver then calls window.pwFinish() for the rest.
+  const finish = async () => {
+    const check = checksum(view);
+    view.finalize(); el.remove(); if (pw) pw.terminate();
+    // Stock Vega also evaluated afresh in the final state (incremental updates can leave stale results).
+    let checkFresh = null;
+    if (mode === "stock") {
+      const s2 = { ...spec, data: spec.data.map(d => (d.name === def.source ? { ...d, values: makeRows(n) } : JSON.parse(JSON.stringify(d)))) };
+      const fresh = new vega.View(vega.parse(s2), { renderer: "none" });
+      for (const [k, v] of Object.entries(def.updates(reps))) k.startsWith("data:") ? fresh.data(k.slice(5), v) : fresh.signal(k, v);
+      await fresh.runAsync();
+      checkFresh = checksum(fresh);
+      fresh.finalize();
+    }
+    return { check, checkFresh };
+  };
+  const r = { vega: vega.version, spec: name, mode, n, threads: mode === "paraweb-inline" ? 0 : threads, isolated: crossOriginIsolated, active: !!(pw && pw.active !== false),
+    initMs, firstMs, updateMs: ms[ms.length >> 1], updateP95Ms: q(0.95), updateMaxMs: ms[ms.length - 1], mem, concurrent, fallbacks };
+  if (keep) { window.pwFinish = finish; return r; }
+  return { ...r, ...(await finish()) };
+};
+window.pwReady = true;
+</script>
+</body>
+</html>
