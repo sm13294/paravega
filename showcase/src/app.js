@@ -6,9 +6,13 @@ import { crossfilterSpec, FIELDS } from "./crossfilterSpec.js";
 
 const $ = id => document.getElementById(id);
 const q = new URLSearchParams(location.search);
-const ENGINES = { stock: "Stock Vega", paravega: "ParaVega", index: "ParaVega + index" };
+const ENGINES = { stock: "Stock Vega", paravega: "ParaVega", index: "ParaVega + index", gpu: "ParaVega + WebGPU" };
 const engine = ENGINES[q.get("engine")] ? q.get("engine") : "stock";
 const rows = Number(q.get("rows")) || 1000000;
+const cores = navigator.hardwareConcurrency || 4;
+// Workers: 1, 2, 4, 8, 16, or all cores (default).
+const threadsParam = q.get("threads") || "auto";
+const threads = threadsParam === "auto" ? cores : Math.max(1, Number(threadsParam) || cores);
 const BINS = { distance: { extent: [0, 4000], maxbins: 40 }, delay: { extent: [-60, 180], maxbins: 40 }, time: { extent: [0, 24], maxbins: 24 } };
 
 // ---- controls (every change reloads the page, so each engine starts clean)
@@ -20,12 +24,16 @@ for (const b of $("engines").querySelectorAll("button")) {
 $("rows").value = String(rows);
 if (!$("rows").value) { $("rows").value = "1000000"; }
 $("rows").onchange = () => go({ rows: $("rows").value });
+$("threads").value = ["1", "2", "4", "8", "16"].includes(threadsParam) ? threadsParam : "auto";
+$("threads").disabled = engine === "stock";
+$("threads").onchange = () => go({ threads: $("threads").value });
 $("engineName").textContent = ENGINES[engine];
 $("engineName").className = "engine " + (engine === "stock" ? "stock" : "pv");
 $("engineNote").textContent = {
   stock: "Vega evaluates the filters, bins and counts tuple by tuple on the main thread.",
   paravega: "The same operators, evaluated as fused kernels over shared columns on all cores.",
   index: "ParaVega with its exact pre-aggregation index: after the first move of a brush, a move costs a lookup and two edge scans.",
+  gpu: "ParaVega with its WebGPU backend: the counts of the three views run as compute shaders over columns kept in GPU buffers.",
 }[engine];
 
 // ---- responsiveness: a dot moved by requestAnimationFrame, and the gaps between frames
@@ -84,7 +92,11 @@ async function main() {
   const spec = crossfilterSpec("stock", BINS, FIELDS);
   spec.data.find(d => d.name === "src").values = tuples;
   let handle = null;
-  if (engine !== "stock") handle = registerParaweb(vega, { preaggregate: engine === "index" });
+  if (engine !== "stock") handle = registerParaweb(vega, { threads, preaggregate: engine === "index", gpu: engine === "gpu" });
+  if (handle && engine === "gpu") {
+    await handle.ready;
+    if (!handle.gpu) $("engineNote").innerHTML = '<span class="warn">WebGPU is not available in this browser, so the counts run on the workers.</span>';
+  }
   const active = !!(handle && handle.active !== false);
   if (engine !== "stock" && !active) {
     $("engineNote").innerHTML = '<span class="warn">ParaVega is inactive: this page is not cross-origin isolated, so the browser provides no shared memory and the dashboard runs on stock Vega.</span>';
@@ -119,7 +131,10 @@ async function main() {
   $("status").textContent = `${rows.toLocaleString()} rows · drag a brush on any histogram`;
   $("envNote").innerHTML = `Vega ${vega.version} · ${navigator.hardwareConcurrency || "?"} logical cores · ` +
     (crossOriginIsolated ? "cross-origin isolated" : `not isolated (${window.pwIsolation || "no headers"})`) +
-    (active ? ` · ParaVega active` : "") + "<br>Numbers depend on the machine; the paper's were measured on a 16-core laptop.";
+    (active ? ` · ParaVega active on ${threads} worker${threads > 1 ? "s" : ""}` : "") +
+    (handle && engine === "gpu" ? (handle.gpu ? " · WebGPU active" : " · no WebGPU") : "") +
+    (active && threads > cores ? `<br><span class="warn">More workers than cores (${cores}): the extra workers share cores.</span>` : "") +
+    "<br>Numbers depend on the machine; the paper's were measured on a 16-core laptop.";
   window.pwView = view; // for the console
 }
 
