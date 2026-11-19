@@ -326,12 +326,40 @@ function renderRuns() {
     const tr = document.createElement("tr");
     const cur = r.page === PAGE && r.engine === engineLabel() && r.workers === workersLabel() && r.rows === rows;
     if (cur) tr.className = "cur";
+    if (r.page === PAGE) { tr.dataset.series = seriesOf(r); tr.dataset.rows = String(r.rows); }
     const vals = [new Date(r.when).toLocaleTimeString(), pageName[r.page] || r.page, r.engine, r.workers, Number(r.rows).toLocaleString(),
       r.error ? r.error : r.positions, cell(r.dragMs || 1000), cell(r.medianMs), cell(r.maxLagMs), cell(r.maxGapMs), cell(r.settleMs), cell(r.firstViewMs)];
     vals.forEach((v, i) => { const td = document.createElement("td"); td.textContent = v; if (i >= 4) td.className = "num"; tr.appendChild(td); });
     body.appendChild(tr);
   }
-  renderChart().catch(e => console.warn("chart:", e));
+  renderChart().then(applyHighlight).catch(e => console.warn("chart:", e));
+}
+
+// ---- linked selection between the chart and the table: a configuration (a line, or the rows
+// of the table with that engine and workers) and optionally a size (a point, a bar, a row).
+let hl = null; // { config, rows | null }
+const METRIC_COL = { 5: "positions", 7: "medianMs", 8: "maxLagMs", 9: "maxGapMs" }; // table column -> chart metric
+function applyHighlight() {
+  const metric = $("chartMetric") ? $("chartMetric").value : "medianMs";
+  const mcol = Number(Object.keys(METRIC_COL).find(k => METRIC_COL[k] === metric));
+  let first = null;
+  for (const tr of document.querySelectorAll("#runsBody tr")) {
+    const on = !!hl && tr.dataset.series === hl.config;
+    const exact = on && (hl.rows === null || tr.dataset.rows === String(hl.rows));
+    tr.classList.toggle("sel-c", on && !exact);
+    tr.classList.toggle("sel", exact);
+    [...tr.children].forEach((td, i) => td.classList.toggle("selcell", exact && hl.rows !== null && i === mcol));
+    if (exact && !first) first = tr;
+  }
+  if (chartView) {
+    chartView.signal("hlc", hl ? hl.config : "").signal("hlr", hl && hl.rows !== null ? hl.rows : 0).runAsync();
+  }
+  return first;
+}
+function setHighlight(next, scroll) {
+  hl = next && hl && hl.config === next.config && hl.rows === next.rows ? null : next; // the same item again clears
+  const first = applyHighlight();
+  if (scroll && first) first.scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 // ---- chart of the runs: one line per configuration over the number of rows (several sizes),
 // or one bar per configuration (one size). Stock Vega red; ParaVega's worker counts a blue
@@ -375,27 +403,43 @@ async function renderChart() {
   const sizes = [...new Set(values.map(d => d.rows))].sort((a, b) => a - b);
   const fmtV = metric === "positions" ? ",.0f" : ",.3~r";
   const tooltip = [{ field: "config", title: "Configuration" }, { field: "rows", title: "Rows", format: "," }, { field: "v", title: METRICS[metric], format: fmtV }];
+  // Highlight (set from the table or by clicking): hlc a configuration, hlr a size.
+  const dim = { condition: { test: "hlc === '' || datum.config === hlc", value: 1 }, value: 0.15 };
+  const isSel = "datum.config === hlc && datum.rows === hlr";
+  const x = { field: "rows", type: "quantitative", title: "rows", scale: { type: "log" }, axis: { values: sizes, format: "~s", grid: false } };
+  const y = { field: "v", type: "quantitative", title: METRICS[metric], scale: { type: metric === "positions" ? "linear" : "log" } };
   const spec = sizes.length > 1 ? {
     width: "container", height: 280, data: { values },
-    mark: { type: "line", strokeWidth: 2, point: { filled: true, size: 45 } },
-    encoding: {
-      x: { field: "rows", type: "quantitative", title: "rows", scale: { type: "log" }, axis: { values: sizes, format: "~s", grid: false } },
-      y: { field: "v", type: "quantitative", title: METRICS[metric], scale: { type: metric === "positions" ? "linear" : "log" } },
-      color, strokeDash: { field: "approx", type: "nominal", legend: null, scale: { domain: [false, true], range: [[1, 0], [5, 3]] } },
-      tooltip,
-    },
+    params: [{ name: "hlc", value: "" }, { name: "hlr", value: 0 }],
+    layer: [
+      { mark: { type: "line", strokeWidth: 2, cursor: "pointer" },
+        encoding: { x, y, color, opacity: dim, strokeDash: { field: "approx", type: "nominal", legend: null, scale: { domain: [false, true], range: [[1, 0], [5, 3]] } } } },
+      { mark: { type: "point", filled: true, cursor: "pointer" },
+        encoding: { x, y, color, opacity: dim, tooltip,
+          size: { condition: { test: isSel, value: 180 }, value: 45 },
+          stroke: { condition: { test: isSel, value: "#1d232b" }, value: null }, strokeWidth: { value: 2 } } },
+    ],
   } : {
     width: "container", height: Math.max(120, 26 * used.length), data: { values },
     title: { text: `${sizes[0].toLocaleString()} rows`, anchor: "start", fontSize: 12, fontWeight: 600 },
+    params: [{ name: "hlc", value: "" }, { name: "hlr", value: 0 }],
     layer: [
-      { mark: { type: "bar", cornerRadiusEnd: 4, height: 16 }, encoding: { y: { field: "config", type: "nominal", title: null, sort: used.map(s => s[0]) }, x: { field: "v", type: "quantitative", title: METRICS[metric], axis: { tickCount: 6 } }, color: { ...color, legend: null }, tooltip } },
+      { mark: { type: "bar", cornerRadiusEnd: 4, height: 16, cursor: "pointer" }, encoding: { y: { field: "config", type: "nominal", title: null, sort: used.map(s => s[0]) }, x: { field: "v", type: "quantitative", title: METRICS[metric], axis: { tickCount: 6 } }, color: { ...color, legend: null }, tooltip, opacity: dim,
+        stroke: { condition: { test: "datum.config === hlc", value: "#1d232b" }, value: null }, strokeWidth: { value: 2 } } },
       { mark: { type: "text", align: "left", dx: 4, fontSize: 11, color: "#1d232b" }, encoding: { y: { field: "config", type: "nominal", sort: used.map(s => s[0]) }, x: { field: "v", type: "quantitative" }, text: { field: "v", type: "quantitative", format: fmtV } } },
     ],
   };
   spec.$schema = "https://vega.github.io/schema/vega-lite/v6.json";
   spec.config = { view: { stroke: null }, axis: { labelFontSize: 11, titleFontSize: 12, gridColor: "#eceef1" }, legend: { labelFontSize: 11, symbolStrokeWidth: 2 } };
   chartView = new vega.View(vega.parse(vegaLite.compile(spec).spec), { renderer: "svg", container: host, hover: true });
+  // Click a point or bar: that configuration and size; a line: the configuration; elsewhere: clear.
+  chartView.addEventListener("click", (_e, item) => {
+    const d = item && item.datum;
+    if (!d || !d.config) return setHighlight(null);
+    setHighlight({ config: d.config, rows: item.mark && item.mark.marktype === "line" ? null : d.rows }, true);
+  });
   await chartView.runAsync();
+  window.pwChart = chartView; // for the console
 }
 
 function downloadRuns() {
@@ -470,7 +514,8 @@ function setupRuns() {
   css.textContent = `#runs { padding: 0 20px 24px; } #runs table { border-collapse: collapse; width: 100%; font-size: 13px; }
 #runs th, #runs td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
 #runs th { color: var(--muted); font-weight: 600; } #runs td.num, #runs th.num { text-align: right; font-variant-numeric: tabular-nums; }
-#runs tr.cur td { background: var(--panel); } #runs .tools { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 8px 0 10px; }
+#runs tr.cur td { background: var(--panel); } #runs tbody tr[data-series] { cursor: pointer; }
+#runs tr.sel-c td { background: #eef4fb; } #runs tr.sel td { background: #d6e6f7; } #runs td.selcell { outline: 2px solid var(--accent); outline-offset: -2px; font-weight: 700; } #runs .tools { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 8px 0 10px; }
 #runs .scroll { overflow-x: auto; max-height: 420px; overflow-y: auto; }`;
   document.head.appendChild(css);
   const sec = document.createElement("section");
@@ -493,7 +538,15 @@ function setupRuns() {
   $("benchRun").onclick = startBench;
   $("benchStop").onclick = stopBench;
   $("runsCsv").onclick = downloadRuns;
-  $("chartMetric").onchange = $("chartScope").onchange = () => renderChart().catch(e => console.warn("chart:", e));
+  $("chartMetric").onchange = $("chartScope").onchange = () => renderChart().then(applyHighlight).catch(e => console.warn("chart:", e));
+  // Click a row: its configuration and size in the chart; a measurement cell also charts that measurement.
+  $("runsBody").addEventListener("click", async e => {
+    const td = e.target.closest("td"), tr = e.target.closest("tr");
+    if (!tr || !tr.dataset.series) return;
+    const col = [...tr.children].indexOf(td), m = METRIC_COL[col];
+    if (m && $("chartMetric").value !== m) { $("chartMetric").value = m; hl = null; await renderChart(); }
+    setHighlight({ config: tr.dataset.series, rows: Number(tr.dataset.rows) });
+  });
   $("runsClear").onclick = () => { if (confirm("Clear all stored runs?")) { save(RUNS_KEY, []); renderRuns(); } };
   const plan = load(BENCH_KEY, null);
   if (plan && plan.page === PAGE) {
