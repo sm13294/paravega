@@ -31,6 +31,9 @@
   .engine.stock { color: var(--bad); } .engine.pv { color: var(--good); }
   #beat { position: relative; height: 28px; border-radius: 14px; background: var(--panel); overflow: hidden; margin: 6px 0 4px; }
   #dot { position: absolute; top: 4px; left: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); }
+  #lagbar { position: relative; height: 28px; border-radius: 14px; background: var(--panel); overflow: hidden; margin: 6px 0 4px; }
+  #lagfill { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: var(--good); }
+  #lagMs { position: absolute; right: 12px; top: 0; line-height: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
   #gaps { width: 100%; height: 90px; display: block; }
   dl { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 8px 0 0; }
   dt { color: var(--muted); } dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
@@ -42,7 +45,7 @@
 <body>
 <header>
   <h1>The same Vega dashboard, with and without ParaVega</h1>
-  <p>Three linked histograms over synthetic flights-like rows: dragging a brush on one histogram filters the other two. The Vega specification is the same in every mode; ParaVega only replaces the operators that evaluate it. Drag a brush, or replay a one-second drag, and watch the moving dot: it stops whenever the page cannot draw.</p>
+  <p>Three linked histograms over synthetic flights-like rows: dragging a brush on one histogram filters the other two. The Vega specification is the same in every mode; ParaVega only replaces the operators that evaluate it. Drag a brush, or replay a one-second drag, and watch the moving dot, which stops whenever the page cannot draw, and the bar below it, which shows how far the histograms are behind the brush.</p>
 </header>
 <div class="bar">
   <div class="seg" id="engines" role="group" aria-label="Engine">
@@ -81,6 +84,14 @@
         <dt>Largest frame gap, last drag</dt><dd id="gapMs">–</dd>
         <dt>Updates still queued after the drag</dt><dd id="settleMs">–</dd>
         <dt>Time to first view</dt><dd id="initMs">–</dd>
+      </dl>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h2>Are the results keeping up?</h2>
+      <div id="lagbar"><div id="lagfill"></div><span id="lagMs">up to date</span></div>
+      <div class="note">How far the histograms are behind the brush: the age of the oldest brush position they do not show yet (log scale, 10 ms to 10 s).</div>
+      <dl>
+        <dt>Largest, last drag</dt><dd id="lagMax">–</dd>
       </dl>
     </div>
     <div class="card note" style="margin-top:12px" id="envNote"></div>

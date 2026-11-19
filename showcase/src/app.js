@@ -64,6 +64,31 @@ function drawGaps(now) {
   void max;
 }
 requestAnimationFrame(frame);
+
+// ---- are the results keeping up? The age of the oldest brush input that the drawn histograms
+// do not include yet. The dot shows whether the page can draw; this meter shows whether the
+// results arrive in time (with ParaVega on few workers the page draws, but the results lag).
+const pendingInputs = []; // times of brush inputs not yet in the drawn results
+let shownState = null, brushState = () => null, lagMax = 0, lagWatch = false;
+const lagFill = $("lagfill"), lagText = $("lagMs");
+const noteInput = t => { pendingInputs.push(t); };
+function shown(state, start) { // an evaluation that started at `start` has been drawn
+  shownState = state;
+  while (pendingInputs.length && pendingInputs[0] <= start) pendingInputs.shift();
+}
+function updateLag() {
+  const now = performance.now();
+  if (pendingInputs.length && brushState() === shownState) pendingInputs.length = 0; // nothing new to show
+  const lag = pendingInputs.length ? Math.max(0, now - pendingInputs[0]) : 0;
+  const p = lag <= 10 ? 0 : Math.min(1, (Math.log10(lag) - 1) / 3);
+  lagFill.style.width = `${(p * 100).toFixed(1)}%`;
+  lagFill.style.background = lag > 300 ? "var(--bad)" : lag > 100 ? "#c77d0a" : "var(--good)";
+  lagText.textContent = lag ? fmt(lag) : "up to date";
+  if (dragging || lagWatch) lagMax = Math.max(lagMax, lag);
+  if (lagWatch && !dragging && lag === 0) { lagWatch = false; $("lagMax").textContent = fmt(lagMax); }
+  requestAnimationFrame(updateLag);
+}
+const startLagWatch = () => { lagMax = 0; lagWatch = true; };
 const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
 const fmt = ms => (ms >= 1000 ? (ms / 1000).toFixed(1) + " s" : ms >= 10 ? ms.toFixed(0) + " ms" : ms.toFixed(1) + " ms");
 
@@ -112,6 +137,9 @@ async function main() {
   // Latency of a brush update: from the start of the dataflow evaluation until the next frame after it.
   const brushSignals = FIELDS.map(f => `${f}_px`);
   let prev = brushSignals.map(s => JSON.stringify(view.signal(s)));
+  brushState = () => brushSignals.map(s => JSON.stringify(view.signal(s))).join("|");
+  shownState = brushState();
+  requestAnimationFrame(updateLag);
   const evaluate = view.evaluate;
   view.evaluate = function (...args) {
     const cur = brushSignals.map(s => JSON.stringify(view.signal(s)));
@@ -119,11 +147,13 @@ async function main() {
     prev = cur;
     const s = performance.now();
     const p = evaluate.apply(this, args);
-    if (changed) Promise.resolve(p).then(() => requestAnimationFrame(() => record(performance.now() - s)));
+    const state = cur.join("|");
+    if (changed) Promise.resolve(p).then(() => requestAnimationFrame(() => { record(performance.now() - s); shown(state, s); }));
     return p;
   };
   // Largest frame gap while the pointer is down on the dashboard.
-  $("view").addEventListener("pointerdown", () => { dragging = true; dragMax = 0; });
+  $("view").addEventListener("pointerdown", e => { dragging = true; dragMax = 0; startLagWatch(); noteInput(e.timeStamp); }, { capture: true });
+  window.addEventListener("pointermove", e => { if (dragging && e.buttons) noteInput(e.timeStamp); }, { capture: true });
   window.addEventListener("pointerup", () => { if (dragging) { dragging = false; $("gapMs").textContent = fmt(dragMax); } });
 
   $("replay").disabled = false;
@@ -151,12 +181,13 @@ async function replay(view) {
   $("replay").disabled = true;
   $("status").textContent = "replaying a one-second drag…";
   await nextFrame();
-  dragging = true; dragMax = 0;
+  dragging = true; dragMax = 0; startLagWatch();
   const t0 = performance.now();
   let k = 0;
   await new Promise(resolve => {
     const id = setInterval(() => {
       const a = 10 + (k++ * 3) % 190;
+      noteInput(performance.now());
       view.signal("time_px", [a, a + 60]);
       view.runAsync();
       if (performance.now() - t0 >= 1000) { clearInterval(id); resolve(); }
