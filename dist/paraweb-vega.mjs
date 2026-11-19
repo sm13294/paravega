@@ -6990,7 +6990,13 @@ function installFarm(vega, onStats, concurrent = true) {
             memo.set(op, true);
             continue;
           }
-          let next = op.run(df._getPulse(op, encode));
+          let next;
+          df._pwInRun = true;
+          try {
+            next = op.run(df._getPulse(op, encode));
+          } finally {
+            df._pwInRun = false;
+          }
           if (next.then) {
             const done = next.then(
               (r) => {
@@ -7041,7 +7047,9 @@ function installFarm(vega, onStats, concurrent = true) {
       const pr = df._postrun.sort((a, b) => b.priority - a.priority);
       df._postrun = [];
       const outer = df._pwNested;
+      const external = df._touched;
       df._pwNested = [];
+      df._touched = uniqueList(id2);
       try {
         for (let i = 0; i < pr.length; ++i) {
           await asyncCallback(df, pr[i].callback);
@@ -7049,6 +7057,7 @@ function installFarm(vega, onStats, concurrent = true) {
         }
       } finally {
         df._pwNested = outer;
+        external.forEach((op) => df._touched.add(op));
       }
     }
     if (postrun) await asyncCallback(df, postrun);
@@ -7074,8 +7083,17 @@ function installFarm(vega, onStats, concurrent = true) {
   };
   entry.$pwFarm = true;
   proto.evaluate = entry;
+  const originalTouch = proto.touch;
+  const touch = function(op, options) {
+    if (!this._pulse || this._pwInRun) return originalTouch.call(this, op, options);
+    this._touched.add(op);
+    if (options && options.skip) op.skip(true);
+    return this;
+  };
+  proto.touch = touch;
   return () => {
     if (proto.evaluate === entry) proto.evaluate = original;
+    if (proto.touch === touch) proto.touch = originalTouch;
   };
 }
 

@@ -109,7 +109,9 @@ export function installFarm(vega: any, onStats?: (s: FarmStats) => void, concurr
           const op = df._heap.pop();
           if (op.rank !== op.qrank) { df._enqueue(op, true); continue; }
           if ((pending.size || held.length) && (!concurrent || !op._pwParallel || blocked(op))) { held.push(op); heldSet.add(op); memo.set(op, true); continue; }
-          let next = op.run(df._getPulse(op, encode));
+          let next: any;
+          df._pwInRun = true;
+          try { next = op.run(df._getPulse(op, encode)); } finally { df._pwInRun = false; }
           if (next.then) {
             const done = next.then(
               (r: any) => { pending.delete(op); finish(op, r); },
@@ -150,14 +152,25 @@ export function installFarm(vega: any, onStats?: (s: FarmStats) => void, concurr
       // A callback can start another evaluation with the synchronous run(), as Vega-Lite's
       // modify() does for selection stores. Vega's run() completes it before returning when no
       // operator is asynchronous; here operators are, so this evaluation waits for it.
+      // With Vega, nothing outside the dataflow runs between this evaluation and the nested one.
+      // Here something can, while the workers compute: a brush moved in the meantime touches
+      // its signal. Those touches are kept for the next queued evaluation and not taken into
+      // the nested one, as with Vega. Otherwise the nested evaluation takes the new brush
+      // position, its own callbacks start another nested one, and during a drag the evaluation
+      // does not return (so the view is not drawn) until the brush stops.
       const outer = df._pwNested;
+      const external = df._touched;
       df._pwNested = [];
+      df._touched = uniqueList(id);
       try {
         for (let i = 0; i < pr.length; ++i) {
           await asyncCallback(df, pr[i].callback);
           while (df._pwNested.length) await df._pwNested.shift();
         }
-      } finally { df._pwNested = outer; }
+      } finally {
+        df._pwNested = outer;
+        external.forEach((op: any) => df._touched.add(op));
+      }
     }
     if (postrun) await asyncCallback(df, postrun);
     if (async.length) {
@@ -177,5 +190,23 @@ export function installFarm(vega: any, onStats?: (s: FarmStats) => void, concurr
   };
   (entry as any).$pwFarm = true;
   proto.evaluate = entry;
-  return () => { if (proto.evaluate === entry) proto.evaluate = original; };
+  // Vega adds an operator touched during an evaluation to that evaluation. With Vega only the
+  // operators of the evaluation can touch then, since it holds the main thread. Here the
+  // evaluation waits for the workers, and an input that arrives meanwhile, such as a brush
+  // moved by the pointer, would join it: the evaluation then takes every new position and
+  // does not end (and the view is not drawn) until the brush stops. A touch from outside the
+  // running operators is therefore queued for the next evaluation, as Vega queues a touch
+  // between evaluations.
+  const originalTouch = proto.touch;
+  const touch = function (this: any, op: any, options?: any) {
+    if (!this._pulse || this._pwInRun) return originalTouch.call(this, op, options);
+    this._touched.add(op);
+    if (options && options.skip) op.skip(true);
+    return this;
+  };
+  proto.touch = touch;
+  return () => {
+    if (proto.evaluate === entry) proto.evaluate = original;
+    if (proto.touch === touch) proto.touch = originalTouch;
+  };
 }
