@@ -68,18 +68,32 @@ requestAnimationFrame(frame);
 // ---- are the results keeping up? The age of the oldest brush input that the drawn histograms
 // do not include yet. The dot shows whether the page can draw; this meter shows whether the
 // results arrive in time (with ParaVega on few workers the page draws, but the results lag).
+// A brush position is shown once the evaluations it started have finished: when the next
+// brush position starts to evaluate, or when the dataflow is idle. (One position can take
+// several evaluations, for example when results arrive from the workers.)
 const pendingInputs = []; // times of brush inputs not yet in the drawn results
-let shownState = null, brushState = () => null, lagMax = 0, lagWatch = false;
+let lagView = null, lagMax = 0, lagWatch = false, openStart = null; // openStart: start of the position being computed
 const lagFill = $("lagfill"), lagText = $("lagMs");
 const noteInput = t => { pendingInputs.push(t); };
-function shown(state, start) { // an evaluation that started at `start` has been drawn
-  shownState = state;
-  while (pendingInputs.length && pendingInputs[0] <= start) pendingInputs.shift();
+// When inputs are drawn, their age at that moment is the lag they had (with stock Vega the page
+// cannot draw while it computes, so this is the only moment the lag can be seen).
+let drawnLag = 0, drawnAt = -Infinity;
+function drawn(n) {
+  if (!n) return;
+  const now = performance.now(), age = now - pendingInputs[0];
+  pendingInputs.splice(0, n);
+  drawnLag = age; drawnAt = now;
+  if (dragging || lagWatch) lagMax = Math.max(lagMax, age);
 }
+const shownUpTo = t => { let n = 0; while (n < pendingInputs.length && pendingInputs[n] <= t) n++; drawn(n); };
 function updateLag() {
   const now = performance.now();
-  if (pendingInputs.length && brushState() === shownState) pendingInputs.length = 0; // nothing new to show
-  const lag = pendingInputs.length ? Math.max(0, now - pendingInputs[0]) : 0;
+  if (lagView && !lagView._running) { // idle: everything is drawn
+    drawn(pendingInputs.length);
+    if (openStart !== null) { record(now - openStart); openStart = null; }
+  }
+  // The age of the oldest input not drawn yet; just after a drawing, the lag that input had.
+  const lag = pendingInputs.length ? Math.max(0, now - pendingInputs[0]) : now - drawnAt < 400 ? drawnLag : 0;
   const p = lag <= 10 ? 0 : Math.min(1, (Math.log10(lag) - 1) / 3);
   lagFill.style.width = `${(p * 100).toFixed(1)}%`;
   lagFill.style.background = lag > 300 ? "var(--bad)" : lag > 100 ? "#c77d0a" : "var(--good)";
@@ -134,11 +148,12 @@ async function main() {
   await nextFrame();
   $("initMs").textContent = fmt(performance.now() - t0);
 
-  // Latency of a brush update: from the start of the dataflow evaluation until the next frame after it.
+  // Latency of a brush update: from the first evaluation of a new brush position until the next
+  // position starts to evaluate or the dataflow is idle (measured to the frame).
   const brushSignals = FIELDS.map(f => `${f}_px`);
   let prev = brushSignals.map(s => JSON.stringify(view.signal(s)));
-  brushState = () => brushSignals.map(s => JSON.stringify(view.signal(s))).join("|");
-  shownState = brushState();
+  let lastChangeStart = -Infinity;
+  lagView = view;
   requestAnimationFrame(updateLag);
   const evaluate = view.evaluate;
   view.evaluate = function (...args) {
@@ -147,8 +162,11 @@ async function main() {
     prev = cur;
     const s = performance.now();
     const p = evaluate.apply(this, args);
-    const state = cur.join("|");
-    if (changed) Promise.resolve(p).then(() => requestAnimationFrame(() => { record(performance.now() - s); shown(state, s); }));
+    if (changed) {
+      shownUpTo(lastChangeStart); // the previous brush position is drawn by now
+      if (openStart !== null) record(s - openStart);
+      lastChangeStart = openStart = s;
+    }
     return p;
   };
   // Largest frame gap while the pointer is down on the dashboard.

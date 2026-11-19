@@ -6776,6 +6776,46 @@ function installFarm(vega, onStats, concurrent = true) {
   };
 }
 
+// src/runtime/coalesce.ts
+var MOVES = /* @__PURE__ */ new Set(["pointermove", "mousemove", "touchmove"]);
+function installMoveCoalescing(vega) {
+  const proto = vega.Dataflow && vega.Dataflow.prototype;
+  if (!proto || proto.runAsync.$pwCoalesce) return () => {
+  };
+  const original = proto.runAsync;
+  const runAsync = function(encode, prerun, postrun) {
+    if (!this._running) return original.call(this, encode, prerun, postrun);
+    const ev = typeof window !== "undefined" ? window.event : void 0;
+    const type = prerun && ev && MOVES.has(ev.type) ? ev.type : null;
+    const queue = this._pwQueue || (this._pwQueue = []);
+    const entry = { type, event: ev, skip: false };
+    if (type) {
+      for (let i = queue.length - 1; i >= 0; --i) {
+        const e = queue[i];
+        if (e.type === null) break;
+        if (e.type === type && e.event !== ev) e.skip = true;
+      }
+    }
+    queue.push(entry);
+    const df = this;
+    const done = () => {
+      const i = queue.indexOf(entry);
+      if (i >= 0) queue.splice(i, 1);
+    };
+    const pre = (...args) => {
+      done();
+      if (entry.skip) return;
+      return prerun ? prerun.apply(df, args) : void 0;
+    };
+    return original.call(this, encode, pre, postrun);
+  };
+  runAsync.$pwCoalesce = true;
+  proto.runAsync = runAsync;
+  return () => {
+    if (proto.runAsync === runAsync) proto.runAsync = original;
+  };
+}
+
 // src/runtime/dense.ts
 var import_resident17 = __toESM(require_resident());
 var ENC = "$pwenc";
@@ -7436,6 +7476,14 @@ function registerParaweb(vega, options = {}) {
     restore = () => {
       if (prev) prev();
       unfarm();
+    };
+  }
+  {
+    const uncoalesce = installMoveCoalescing(vega);
+    const prev = restore;
+    restore = () => {
+      if (prev) prev();
+      uncoalesce();
     };
   }
   return {

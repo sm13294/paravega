@@ -15,6 +15,7 @@ import { GpuBackend } from "./gpu";
 import { defineOperators, recordExpressionSource } from "./runtime/operators";
 import { installWorkerLibrary } from "./runtime/derived";
 import { FarmStats, installFarm } from "./runtime/farm";
+import { installMoveCoalescing } from "./runtime/coalesce";
 import { defineDense, recordEncoderSource } from "./runtime/dense";
 
 export { runAggregate, resolveBin, SUPPORTED_OPS } from "./aggregate";
@@ -156,6 +157,13 @@ export function registerParaweb(vega: any, options: ParawebOptions = {}): Parawe
     const unfarm = installFarm(vega, options.onFarmStats, options.farm ?? true);
     const prev = restore;
     restore = () => { if (prev) prev(); unfarm(); };
+  }
+  // Keep only the newest pending pointer move while an evaluation runs (see coalesce.ts):
+  // the main thread stays free during an evaluation, so without this every move is queued.
+  {
+    const uncoalesce = installMoveCoalescing(vega);
+    const prev = restore;
+    restore = () => { if (prev) prev(); uncoalesce(); };
   }
 
   return {
