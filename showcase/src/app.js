@@ -326,7 +326,73 @@ function renderRuns() {
     vals.forEach((v, i) => { const td = document.createElement("td"); td.textContent = v; if (i >= 4) td.className = "num"; tr.appendChild(td); });
     body.appendChild(tr);
   }
+  renderChart().catch(e => console.warn("chart:", e));
 }
+// ---- chart of the runs: one line per configuration over the number of rows (several sizes),
+// or one bar per configuration (one size). Stock Vega red; ParaVega's worker counts a blue
+// ramp from no workers (light) to 16 (dark); the index green; WebGPU purple (exact) and
+// orange (approximate, dashed). Identity is also in the legend, the tooltips and the table.
+const SERIES = [
+  ["Stock Vega", "#b3261e"],
+  ["ParaVega, no workers", "#9cc2e5"], ["ParaVega, 1 worker", "#6fa6d8"], ["ParaVega, 2 workers", "#4a8bc9"],
+  ["ParaVega, 4 workers", "#2f6fb3"], ["ParaVega, 8 workers", "#1b5596"], ["ParaVega, 16 workers", "#0d3b70"],
+  ["ParaVega + index", "#1f7a4d"], ["WebGPU", "#7b3294"], ["WebGPU (exact)", "#7b3294"], ["WebGPU (approx.)", "#d6700f"],
+];
+const METRICS = { medianMs: "Median update (ms)", maxLagMs: "Largest lag of the views (ms)", maxGapMs: "Largest frame gap (ms)", positions: "Brush positions in one second" };
+function seriesOf(r) {
+  if (r.engine.startsWith("Stock")) return "Stock Vega";
+  if (r.engine.includes("index")) return "ParaVega + index";
+  if (r.engine.includes("WebGPU")) return r.engine.includes("approx") ? "WebGPU (approx.)" : r.engine.includes("exact") ? "WebGPU (exact)" : "WebGPU";
+  if (r.workers === "none") return "ParaVega, no workers";
+  if (r.workers === "1") return "ParaVega, 1 worker";
+  return `ParaVega, ${r.workers} workers`;
+}
+let chartView = null;
+async function renderChart() {
+  const host = $("runsChart");
+  if (!host || typeof vegaLite === "undefined") return;
+  const metric = $("chartMetric").value, scope = $("chartScope").value;
+  let runs = load(RUNS_KEY, []).filter(r => r.page === PAGE && !r.error && r[metric] > 0);
+  if (scope === "batch") {
+    const last = [...runs].reverse().find(r => r.batch);
+    runs = last ? runs.filter(r => r.batch === last.batch) : [];
+  }
+  // The latest run per configuration and size.
+  const latest = new Map();
+  for (const r of runs) latest.set(seriesOf(r) + "|" + r.rows, r);
+  const values = [...latest.values()].map(r => ({ config: seriesOf(r), rows: Number(r.rows), v: r[metric], approx: seriesOf(r) === "WebGPU (approx.)" }));
+  if (chartView) { chartView.finalize(); chartView = null; }
+  host.innerHTML = "";
+  if (!values.length) { host.innerHTML = `<div class="note">No runs to chart yet${scope === "batch" ? " from a benchmark" : ""}.</div>`; return; }
+  const present = new Set(values.map(d => d.config));
+  const used = SERIES.filter(([n]) => present.has(n));
+  const color = { field: "config", type: "nominal", title: null, scale: { domain: used.map(s => s[0]), range: used.map(s => s[1]) }, sort: used.map(s => s[0]) };
+  const sizes = [...new Set(values.map(d => d.rows))].sort((a, b) => a - b);
+  const fmtV = metric === "positions" ? ",.0f" : ",.3~r";
+  const tooltip = [{ field: "config", title: "Configuration" }, { field: "rows", title: "Rows", format: "," }, { field: "v", title: METRICS[metric], format: fmtV }];
+  const spec = sizes.length > 1 ? {
+    width: "container", height: 280, data: { values },
+    mark: { type: "line", strokeWidth: 2, point: { filled: true, size: 45 } },
+    encoding: {
+      x: { field: "rows", type: "quantitative", title: "rows", scale: { type: "log" }, axis: { values: sizes, format: "~s", grid: false } },
+      y: { field: "v", type: "quantitative", title: METRICS[metric], scale: { type: metric === "positions" ? "linear" : "log" } },
+      color, strokeDash: { field: "approx", type: "nominal", legend: null, scale: { domain: [false, true], range: [[1, 0], [5, 3]] } },
+      tooltip,
+    },
+  } : {
+    width: "container", height: Math.max(120, 26 * used.length), data: { values },
+    title: { text: `${sizes[0].toLocaleString()} rows`, anchor: "start", fontSize: 12, fontWeight: 600 },
+    layer: [
+      { mark: { type: "bar", cornerRadiusEnd: 4, height: 16 }, encoding: { y: { field: "config", type: "nominal", title: null, sort: used.map(s => s[0]) }, x: { field: "v", type: "quantitative", title: METRICS[metric], axis: { tickCount: 6 } }, color: { ...color, legend: null }, tooltip } },
+      { mark: { type: "text", align: "left", dx: 4, fontSize: 11, color: "#1d232b" }, encoding: { y: { field: "config", type: "nominal", sort: used.map(s => s[0]) }, x: { field: "v", type: "quantitative" }, text: { field: "v", type: "quantitative", format: fmtV } } },
+    ],
+  };
+  spec.$schema = "https://vega.github.io/schema/vega-lite/v6.json";
+  spec.config = { view: { stroke: null }, axis: { labelFontSize: 11, titleFontSize: 12, gridColor: "#eceef1" }, legend: { labelFontSize: 11, symbolStrokeWidth: 2 } };
+  chartView = new vega.View(vega.parse(vegaLite.compile(spec).spec), { renderer: "svg", container: host, hover: true });
+  await chartView.runAsync();
+}
+
 function downloadRuns() {
   const runs = load(RUNS_KEY, []);
   const cols = ["when", "batch", "page", "engine", "workers", "rows", "positions", "updates", "medianMs", "maxLagMs", "maxGapMs", "settleMs", "firstViewMs", "error", "cores", "vega", "isolated", "gpu"];
@@ -410,11 +476,15 @@ function setupRuns() {
   <button id="runsCsv">Download CSV</button> <button id="runsClear">Clear runs</button>
 </div>
 <div class="note" style="margin:0 0 8px">Every replay is stored here. The benchmark loads every configuration in a fresh page (stock Vega, ParaVega with no workers and 1 to 16 workers, ${PAGE === "crossfilter" ? "the index, WebGPU" : "WebGPU exact and approximate"}), replays the drag once to warm up and once to measure. Stock Vega is skipped above 1M rows.</div>
+<div class="tools" style="margin-top:4px"><label>Chart <select id="chartMetric">${Object.entries(METRICS).map(([k, t]) => `<option value="${k}">${t.replace(/ \(ms\)/, "")}</option>`).join("")}</select></label>
+  <label>of <select id="chartScope"><option value="batch">the latest benchmark</option><option value="all">all runs (latest per configuration and size)</option></select></label></div>
+<div id="runsChart" style="width:100%;margin:0 0 12px"></div>
 <div class="scroll"><table><thead><tr><th>Time</th><th>Page</th><th>Engine</th><th>Workers</th><th class="num">Rows</th><th class="num">Positions</th><th class="num">Median update</th><th class="num">Largest lag</th><th class="num">Largest frame gap</th><th class="num">After the drag</th><th class="num">First view</th></tr></thead><tbody id="runsBody"></tbody></table></div></div>`;
   document.body.appendChild(sec);
   $("benchRun").onclick = startBench;
   $("benchStop").onclick = stopBench;
   $("runsCsv").onclick = downloadRuns;
+  $("chartMetric").onchange = $("chartScope").onchange = () => renderChart().catch(e => console.warn("chart:", e));
   $("runsClear").onclick = () => { if (confirm("Clear all stored runs?")) { save(RUNS_KEY, []); renderRuns(); } };
   const plan = load(BENCH_KEY, null);
   if (plan && plan.page === PAGE) {
