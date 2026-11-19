@@ -1,0 +1,10 @@
+{
+  "n": 10000000,
+  "threads": 16,
+  "copyMs": 20.045000076293945,
+  "originalMs": 173.72500038146973,
+  "residentFnMs": 5.819999694824219,
+  "residentMs": 5.470000267028809,
+  "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36"
+}

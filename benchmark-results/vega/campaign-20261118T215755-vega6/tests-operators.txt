@@ -1,0 +1,24 @@
+Failed to load resource: the server responded with a status of 404 (Not Found)
+ok   crossfilter dashboard (stock spec) 
+ok   histogram with brush filter (hand-written range test) 
+ok   general expression filter, string field, all ops 
+ok   extent -> bin with signal extent -> aggregate (Vega-Lite style) 
+ok   formula feeding a filter and an aggregate, materialized output 
+ok   filter output read by a mark data set (materialized changesets) 
+ok   date field and string functions (main-thread fallback inside kernels) 
+ok   Vega-Lite crossfilter (repeat, interval brush) 
+ok   Vega-Lite point selection (empty: false) on a nominal field, mean 
+ok   Vega-Lite 2-D interval brush filtering an aggregate 
+ok   Vega-Lite timeUnit, calculate + bin + sum, month of a date 
+ok   joinaggregate (group mean per row) -> filter on it -> aggregate; materialized rows 
+ok   Vega-Lite joinaggregate + calculate + bin by group 
+ok   sorted collect (parallel sample sort): numbers, strings with nulls, descending, after a filter 
+ok   window (parallel Scan): ranks and cumulative aggregates, peers and ignorePeers, partitions, no sort 
+ok   Vega-Lite box plot (q1, median, q3 by parallel sort) behind a brush 
+ok   aggregate with median, q1, q3 next to other ops, derived field, bins 
+ok   lookup (values from a secondary table by key, default, two keys) feeding filter, formula, aggregate (fallbacks: aggregate: measure fleet with values that are not numbers)
+ok   window frames (sliding, one-sided, whole partition, peers) and value ops (lag, lead, first, last, nth) 
+ok   Vega-Lite density per group (kde, estimated bandwidth) behind a brush (fallbacks: aggregate: cross, drop or key)
+ok   Vega kde: cumulative, counts, extent, shared, steps, fixed bandwidth, derived field 
+21/21 operator cases passed
+(Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36)

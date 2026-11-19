@@ -1,0 +1,18 @@
+[three] synthetic  stock            0/301 bins differ  ok
+[three] synthetic  crossfilter      13/301 bins differ (max 0.04%)  FAIL
+[three] synthetic  inline           0/301 bins differ  ok
+[three] synthetic  tuples           0/301 bins differ  ok
+[three] synthetic  preagg           0/301 bins differ  ok
+[three] synthetic  gpu              0/301 bins differ  ok
+[three] synthetic  mosaic-nopreagg  0/301 bins differ  ok
+[wide] flights    stock            0/632 bins differ  ok
+[wide] flights    crossfilter      364/632 bins differ (max 50.00%)  FAIL
+[wide] flights    inline           0/632 bins differ  ok
+[wide] flights    tuples           0/632 bins differ  ok
+[wide] flights    preagg           0/632 bins differ  ok
+[wide] flights    gpu              0/632 bins differ  ok
+[wide] flights    mosaic-nopreagg  0/632 bins differ  ok
+[wide] flights    mosaic           333/632 bins differ (max 42.86%)  (approximate by design)
+[wide] flights    mosaic-noconsol  333/632 bins differ (max 42.86%)  (approximate by design)
+[wide] flights    falcon-arrow     369/538 bins differ (max 511.53%)  (approximate by design)
+[wide] flights    falcon-duckdb    249/538 bins differ (max 100.00%)  (approximate by design)

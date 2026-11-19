@@ -1,0 +1,3386 @@
+{
+  "env": {
+    "userAgent": "Chrome/152.0.7977.54",
+    "cores": 16,
+    "date": "2026-11-19T00:47:29.639Z",
+    "browserPerConfig": true,
+    "browser": "chrome"
+  },
+  "suite": "scatter",
+  "dataset": "flights",
+  "dashboard": null,
+  "reps": 5,
+  "results": [
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "stock",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 261.15500020980835,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 74.98250007629395,
+      "jumpMedianMs": 46.02749991416931,
+      "computeMedianMs": null,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 17.40500020980835,
+      "secondBrushMs": 17.240000247955322,
+      "drag": {
+        "fps": 38.43142152813029,
+        "maxFrameGapMs": 75.03500032424927,
+        "settleMs": 6.139999866485596
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 81.99500036239624,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 27.59000015258789,
+      "jumpMedianMs": 13.045000076293945,
+      "computeMedianMs": 4.324999809265137,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.9149999618530273,
+      "secondBrushMs": 1.630000114440918,
+      "drag": {
+        "fps": 59.99090461807161,
+        "maxFrameGapMs": 30.71999979019165,
+        "settleMs": 19.97000026702881
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 30.739999771118164,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 23.737499952316284,
+      "jumpMedianMs": 10.084999799728394,
+      "computeMedianMs": 7.105000019073486,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.815000057220459,
+      "secondBrushMs": 5.654999732971191,
+      "drag": {
+        "fps": 59.532523295098365,
+        "maxFrameGapMs": 34.739999771118164,
+        "settleMs": 18.550000190734863
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 4,
+      "initMs": 85.22499990463257,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 25.77500009536743,
+      "jumpMedianMs": 12.222500085830688,
+      "computeMedianMs": 2.507499933242798,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.1050000190734863,
+      "secondBrushMs": 0.9099998474121094,
+      "drag": {
+        "fps": 59.408447688686344,
+        "maxFrameGapMs": 28.84499979019165,
+        "settleMs": 21.05500030517578
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 4,
+      "initMs": 29.230000019073486,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 22.182499885559082,
+      "jumpMedianMs": 10.014999866485596,
+      "computeMedianMs": 5.434999942779541,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.054999828338623,
+      "secondBrushMs": 5.730000019073486,
+      "drag": {
+        "fps": 58.97138437197994,
+        "maxFrameGapMs": 36.52500009536743,
+        "settleMs": 19.135000228881836
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 94.44000005722046,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 26.329999923706055,
+      "jumpMedianMs": 11.922500133514404,
+      "computeMedianMs": 2.7699997425079346,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.4600000381469727,
+      "secondBrushMs": 6.034999847412109,
+      "drag": {
+        "fps": 60.815213445375306,
+        "maxFrameGapMs": 32.704999923706055,
+        "settleMs": 17.864999771118164
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 46.420000076293945,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 23.047499895095825,
+      "jumpMedianMs": 10.377500295639038,
+      "computeMedianMs": 6.107500076293945,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 6.715000152587891,
+      "secondBrushMs": 0.9250001907348633,
+      "drag": {
+        "fps": 60.01839908187123,
+        "maxFrameGapMs": 29.204999923706055,
+        "settleMs": 13.434999942779541
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "stock",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 1144.8850002288818,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 452.07999992370605,
+      "jumpMedianMs": 323.25250005722046,
+      "computeMedianMs": null,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 84.78499984741211,
+      "secondBrushMs": 82.55499982833862,
+      "drag": {
+        "fps": 11.812360648396586,
+        "maxFrameGapMs": 155.0950002670288,
+        "settleMs": 0.009999752044677734
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 207.77500009536743,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 179.5974998474121,
+      "jumpMedianMs": 84.54500007629395,
+      "computeMedianMs": 25.03500008583069,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 15.28000020980835,
+      "secondBrushMs": 9.059999942779541,
+      "drag": {
+        "fps": 36.142110778478006,
+        "maxFrameGapMs": 167.0199999809265,
+        "settleMs": 124.23000001907349
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 44.84499979019165,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 138.5425000190735,
+      "jumpMedianMs": 72.17499995231628,
+      "computeMedianMs": 40.582499980926514,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 7.914999961853027,
+      "secondBrushMs": 6.784999847412109,
+      "drag": {
+        "fps": 36.12354251816814,
+        "maxFrameGapMs": 198.07499980926514,
+        "settleMs": 158.97499990463257
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 4,
+      "initMs": 244.73999977111816,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 155.88000011444092,
+      "jumpMedianMs": 76.8675000667572,
+      "computeMedianMs": 8.572499990463257,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 3.184999942779541,
+      "secondBrushMs": 5.779999732971191,
+      "drag": {
+        "fps": 35.108837389769846,
+        "maxFrameGapMs": 169.5349998474121,
+        "settleMs": 129.66499996185303
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 4,
+      "initMs": 33.515000343322754,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 123.87000012397766,
+      "jumpMedianMs": 71.65750026702881,
+      "computeMedianMs": 26.799999952316284,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 2.8450002670288086,
+      "secondBrushMs": 2.4850001335144043,
+      "drag": {
+        "fps": 36.04485010207345,
+        "maxFrameGapMs": 157.82999992370605,
+        "settleMs": 119.31999969482422
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 16,
+      "initMs": 226.25,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 157.23250007629395,
+      "jumpMedianMs": 74.73250007629395,
+      "computeMedianMs": 6.632500171661377,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 3.6500000953674316,
+      "secondBrushMs": 2.3849997520446777,
+      "drag": {
+        "fps": 34.3980343980344,
+        "maxFrameGapMs": 165.2200002670288,
+        "settleMs": 126.51999998092651
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 16,
+      "initMs": 50.144999980926514,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 123.34500026702881,
+      "jumpMedianMs": 64.4375,
+      "computeMedianMs": 24.887500047683716,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 2.4549999237060547,
+      "secondBrushMs": 7.210000038146973,
+      "drag": {
+        "fps": 36.17320388051308,
+        "maxFrameGapMs": 146.5299997329712,
+        "settleMs": 103.96500015258789
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 1,
+      "initMs": 60.55999994277954,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 287.44749999046326,
+      "jumpMedianMs": 134.7799997329712,
+      "computeMedianMs": 74.1875,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 14.199999809265137,
+      "secondBrushMs": 13.929999828338623,
+      "drag": {
+        "fps": 26.42452195819163,
+        "maxFrameGapMs": 333.28500032424927,
+        "settleMs": 331.94000005722046
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 4,
+      "initMs": 39.894999980926514,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 284.5075001716614,
+      "jumpMedianMs": 134.3549997806549,
+      "computeMedianMs": 49.27500033378601,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 5.154999732971191,
+      "secondBrushMs": 4.300000190734863,
+      "drag": {
+        "fps": 27.448937943143218,
+        "maxFrameGapMs": 334.12999963760376,
+        "settleMs": 254.67999982833862
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 16,
+      "initMs": 51.52999973297119,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 263.2024998664856,
+      "jumpMedianMs": 122.64999985694885,
+      "computeMedianMs": 45.57000017166138,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 3.7749996185302734,
+      "secondBrushMs": 2.5,
+      "drag": {
+        "fps": 27.057192141631127,
+        "maxFrameGapMs": 318.9949998855591,
+        "settleMs": 318.52500009536743
+      },
+      "rep": 0
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "stock",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 256.81500005722046,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 75.60750007629395,
+      "jumpMedianMs": 46.702499866485596,
+      "computeMedianMs": null,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 16.919999599456787,
+      "secondBrushMs": 16.9350004196167,
+      "drag": {
+        "fps": 38.40835765651623,
+        "maxFrameGapMs": 74.07499980926514,
+        "settleMs": 6.089999675750732
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 82.51999998092651,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 29.105000019073486,
+      "jumpMedianMs": 14.335000038146973,
+      "computeMedianMs": 4.499999761581421,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.9049997329711914,
+      "secondBrushMs": 1.5900001525878906,
+      "drag": {
+        "fps": 59.21596157448192,
+        "maxFrameGapMs": 30.8100004196167,
+        "settleMs": 22.710000038146973
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 31.34000015258789,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 23.84500002861023,
+      "jumpMedianMs": 10.347500085830688,
+      "computeMedianMs": 7.200000047683716,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.880000114440918,
+      "secondBrushMs": 1.8550000190734863,
+      "drag": {
+        "fps": 59.6532414987805,
+        "maxFrameGapMs": 29.28000020980835,
+        "settleMs": 17.105000019073486
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 4,
+      "initMs": 79.35500001907349,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 26.297499895095825,
+      "jumpMedianMs": 12.017500162124634,
+      "computeMedianMs": 2.612499952316284,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.1349997520446777,
+      "secondBrushMs": 5.829999923706055,
+      "drag": {
+        "fps": 60.63376722813938,
+        "maxFrameGapMs": 39.9399995803833,
+        "settleMs": 20.90000009536743
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 4,
+      "initMs": 30.00499963760376,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 21.84749984741211,
+      "jumpMedianMs": 9.997499942779541,
+      "computeMedianMs": 5.5375001430511475,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.0149998664855957,
+      "secondBrushMs": 5.980000019073486,
+      "drag": {
+        "fps": 59.21898891953997,
+        "maxFrameGapMs": 35.72499990463257,
+        "settleMs": 18.84499979019165
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 88.14499998092651,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 25.43499994277954,
+      "jumpMedianMs": 12.579999923706055,
+      "computeMedianMs": 2.7175002098083496,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.7750000953674316,
+      "secondBrushMs": 5.899999618530273,
+      "drag": {
+        "fps": 59.988582805931024,
+        "maxFrameGapMs": 30.90000009536743,
+        "settleMs": 17.485000133514404
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 47.19000005722046,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 22.359999895095825,
+      "jumpMedianMs": 10.700000286102295,
+      "computeMedianMs": 5.815000057220459,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.554999828338623,
+      "secondBrushMs": 6.03000020980835,
+      "drag": {
+        "fps": 60.328302729075965,
+        "maxFrameGapMs": 28.910000324249268,
+        "settleMs": 13.099999904632568
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "stock",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 1140.4299998283386,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 447.58249974250793,
+      "jumpMedianMs": 324.22000002861023,
+      "computeMedianMs": null,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 83.43000030517578,
+      "secondBrushMs": 82.36499977111816,
+      "drag": {
+        "fps": 11.9012788906937,
+        "maxFrameGapMs": 142.7350001335144,
+        "settleMs": 0.005000114440917969
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 205.59499979019165,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 181.5350000858307,
+      "jumpMedianMs": 86.29250001907349,
+      "computeMedianMs": 24.957499980926514,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 18.22499990463257,
+      "secondBrushMs": 8.809999942779541,
+      "drag": {
+        "fps": 33.78079481539837,
+        "maxFrameGapMs": 169.81500005722046,
+        "settleMs": 124.75999975204468
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 43.670000076293945,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 139.28999996185303,
+      "jumpMedianMs": 71.76500034332275,
+      "computeMedianMs": 40.519999980926514,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 7.505000114440918,
+      "secondBrushMs": 6.960000038146973,
+      "drag": {
+        "fps": 35.814869683824895,
+        "maxFrameGapMs": 183.87000036239624,
+        "settleMs": 144.81999969482422
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 4,
+      "initMs": 196.57499980926514,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 167.6599998474121,
+      "jumpMedianMs": 78.94250011444092,
+      "computeMedianMs": 8.317500114440918,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 3.630000114440918,
+      "secondBrushMs": 7.424999713897705,
+      "drag": {
+        "fps": 35.53404712620246,
+        "maxFrameGapMs": 169.12999963760376,
+        "settleMs": 130.77500009536743
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 4,
+      "initMs": 32.77499961853027,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 123.02999973297119,
+      "jumpMedianMs": 66.3199999332428,
+      "computeMedianMs": 26.419999837875366,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 3.0149998664855957,
+      "secondBrushMs": 2.25,
+      "drag": {
+        "fps": 36.17216304800685,
+        "maxFrameGapMs": 147.72499990463257,
+        "settleMs": 112.30499982833862
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 16,
+      "initMs": 241.12000036239624,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 163.5499997138977,
+      "jumpMedianMs": 72.48250007629395,
+      "computeMedianMs": 6.572500228881836,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 3.9449996948242188,
+      "secondBrushMs": 1.9800000190734863,
+      "drag": {
+        "fps": 35.24879777211858,
+        "maxFrameGapMs": 145.21499967575073,
+        "settleMs": 142.82999992370605
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 16,
+      "initMs": 50.894999980926514,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 125.17499995231628,
+      "jumpMedianMs": 70.75999999046326,
+      "computeMedianMs": 24.829999923706055,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 2.4499998092651367,
+      "secondBrushMs": 1.625,
+      "drag": {
+        "fps": 36.52422220529086,
+        "maxFrameGapMs": 146.25999975204468,
+        "settleMs": 99.48499965667725
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 1,
+      "initMs": 60.75,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 294.74749994277954,
+      "jumpMedianMs": 133.41249990463257,
+      "computeMedianMs": 74.72249984741211,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 14.299999713897705,
+      "secondBrushMs": 13.569999694824219,
+      "drag": {
+        "fps": 27.421545688385663,
+        "maxFrameGapMs": 317.1749997138977,
+        "settleMs": 284.25
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 4,
+      "initMs": 38.105000019073486,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 281.5125000476837,
+      "jumpMedianMs": 136.05749988555908,
+      "computeMedianMs": 49.390000104904175,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 5.25,
+      "secondBrushMs": 4.150000095367432,
+      "drag": {
+        "fps": 28.94680662887175,
+        "maxFrameGapMs": 284.2400002479553,
+        "settleMs": 249.01000022888184
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 16,
+      "initMs": 50.71000003814697,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 287.97499990463257,
+      "jumpMedianMs": 127.125,
+      "computeMedianMs": 48.105000019073486,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 4.049999713897705,
+      "secondBrushMs": 2.559999942779541,
+      "drag": {
+        "fps": 28.815782188332758,
+        "maxFrameGapMs": 286.1150002479553,
+        "settleMs": 238.0950002670288
+      },
+      "rep": 1
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "stock",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 254.07000017166138,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 73.26500010490417,
+      "jumpMedianMs": 44.31749987602234,
+      "computeMedianMs": null,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 16.84000015258789,
+      "secondBrushMs": 16.72000026702881,
+      "drag": {
+        "fps": 39.925602054797565,
+        "maxFrameGapMs": 77.88499975204468,
+        "settleMs": 14.164999961853027
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 79.99499988555908,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 28.007499933242798,
+      "jumpMedianMs": 14.442499876022339,
+      "computeMedianMs": 4.3500001430511475,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 2.0550003051757812,
+      "secondBrushMs": 1.7150001525878906,
+      "drag": {
+        "fps": 60.31099072655919,
+        "maxFrameGapMs": 33.77999973297119,
+        "settleMs": 20.644999980926514
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 31.65000009536743,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 23.835000038146973,
+      "jumpMedianMs": 12.734999656677246,
+      "computeMedianMs": 7.017499923706055,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.7699999809265137,
+      "secondBrushMs": 1.630000114440918,
+      "drag": {
+        "fps": 59.18451501873318,
+        "maxFrameGapMs": 36.079999923706055,
+        "settleMs": 19.22499990463257
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 4,
+      "initMs": 79.25,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 26.142500162124634,
+      "jumpMedianMs": 13.642500162124634,
+      "computeMedianMs": 2.6600000858306885,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.0900001525878906,
+      "secondBrushMs": 5.875,
+      "drag": {
+        "fps": 60.43356206662243,
+        "maxFrameGapMs": 39.454999923706055,
+        "settleMs": 23.234999656677246
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 4,
+      "initMs": 30.239999771118164,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 21.940000295639038,
+      "jumpMedianMs": 11.865000009536743,
+      "computeMedianMs": 5.417500019073486,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.0049996376037598,
+      "secondBrushMs": 5.815000057220459,
+      "drag": {
+        "fps": 59.2500497610943,
+        "maxFrameGapMs": 35.74500036239624,
+        "settleMs": 19.230000019073486
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 97.66499996185303,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 26.012500047683716,
+      "jumpMedianMs": 12.897499799728394,
+      "computeMedianMs": 2.6649999618530273,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 6.605000019073486,
+      "secondBrushMs": 0.809999942779541,
+      "drag": {
+        "fps": 59.74665490128155,
+        "maxFrameGapMs": 30.65499973297119,
+        "settleMs": 17.615000247955322
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 43.64999961853027,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 22.90249991416931,
+      "jumpMedianMs": 11.5,
+      "computeMedianMs": 6.037499904632568,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.434999942779541,
+      "secondBrushMs": 0.9099998474121094,
+      "drag": {
+        "fps": 59.982103684457805,
+        "maxFrameGapMs": 31.164999961853027,
+        "settleMs": 12.929999828338623
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "stock",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 1117.2650003433228,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 452.4850001335144,
+      "jumpMedianMs": 326.40750002861023,
+      "computeMedianMs": null,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 84.82499980926514,
+      "secondBrushMs": 85.52999973297119,
+      "drag": {
+        "fps": 11.860989203369286,
+        "maxFrameGapMs": 151.6100001335144,
+        "settleMs": 0.010000228881835938
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 206.34999990463257,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 177.67999982833862,
+      "jumpMedianMs": 84.78750014305115,
+      "computeMedianMs": 24.054999828338623,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 15.255000114440918,
+      "secondBrushMs": 8.755000114440918,
+      "drag": {
+        "fps": 33.29485926339113,
+        "maxFrameGapMs": 231.5,
+        "settleMs": 197.7300000190735
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 44.454999923706055,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 136.4449999332428,
+      "jumpMedianMs": 74.54499983787537,
+      "computeMedianMs": 40.8199999332428,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 7.539999961853027,
+      "secondBrushMs": 7.035000324249268,
+      "drag": {
+        "fps": 35.4064906524043,
+        "maxFrameGapMs": 179.71000003814697,
+        "settleMs": 140.40000009536743
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 4,
+      "initMs": 193.71999979019165,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 162.96749997138977,
+      "jumpMedianMs": 79.5074999332428,
+      "computeMedianMs": 8.37999963760376,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 3.695000171661377,
+      "secondBrushMs": 6.824999809265137,
+      "drag": {
+        "fps": 35.17882569448454,
+        "maxFrameGapMs": 166.11999988555908,
+        "settleMs": 127.51500034332275
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 4,
+      "initMs": 32.63499975204468,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 126.0074999332428,
+      "jumpMedianMs": 65.09249997138977,
+      "computeMedianMs": 26.93499994277954,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 3.0850000381469727,
+      "secondBrushMs": 2.2149996757507324,
+      "drag": {
+        "fps": 36.60824599405142,
+        "maxFrameGapMs": 149.59499979019165,
+        "settleMs": 108.49000024795532
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 16,
+      "initMs": 228.48499965667725,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 162.4375,
+      "jumpMedianMs": 72.5774998664856,
+      "computeMedianMs": 5.862499952316284,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 4.900000095367432,
+      "secondBrushMs": 2.0699996948242188,
+      "drag": {
+        "fps": 35.06662659666472,
+        "maxFrameGapMs": 164.04500007629395,
+        "settleMs": 125.26999998092651
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 16,
+      "initMs": 48.5,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 123.37249994277954,
+      "jumpMedianMs": 70.9599997997284,
+      "computeMedianMs": 25.019999980926514,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 2.554999828338623,
+      "secondBrushMs": 6.815000057220459,
+      "drag": {
+        "fps": 37.1463002704622,
+        "maxFrameGapMs": 155.56999969482422,
+        "settleMs": 117.07999992370605
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 1,
+      "initMs": 61.68000030517578,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 296.18250012397766,
+      "jumpMedianMs": 140.58750009536743,
+      "computeMedianMs": 78.74499988555908,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 14.205000400543213,
+      "secondBrushMs": 13.394999980926514,
+      "drag": {
+        "fps": 26.124232597117214,
+        "maxFrameGapMs": 377.1800003051758,
+        "settleMs": 375.05999994277954
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 4,
+      "initMs": 37.644999980926514,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 293.4874999523163,
+      "jumpMedianMs": 137.9599997997284,
+      "computeMedianMs": 48.5625,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 5,
+      "secondBrushMs": 4.315000057220459,
+      "drag": {
+        "fps": 28.105973574488374,
+        "maxFrameGapMs": 318.19999980926514,
+        "settleMs": 260.7550001144409
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 16,
+      "initMs": 49.66999959945679,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 268.3900001049042,
+      "jumpMedianMs": 123.38750004768372,
+      "computeMedianMs": 44.2425000667572,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 4.03000020980835,
+      "secondBrushMs": 2.4099998474121094,
+      "drag": {
+        "fps": 27.579476630485505,
+        "maxFrameGapMs": 294.42000007629395,
+        "settleMs": 237.92999982833862
+      },
+      "rep": 2
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "stock",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 280.55000019073486,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 74.875,
+      "jumpMedianMs": 43.482500076293945,
+      "computeMedianMs": null,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 16.93499994277954,
+      "secondBrushMs": 16.759999752044678,
+      "drag": {
+        "fps": 40.11957589998779,
+        "maxFrameGapMs": 73.29000043869019,
+        "settleMs": 13.514999866485596
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 77.1100001335144,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 27.807499885559082,
+      "jumpMedianMs": 13.285000085830688,
+      "computeMedianMs": 4.490000009536743,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.8600001335144043,
+      "secondBrushMs": 5.900000095367432,
+      "drag": {
+        "fps": 59.308232657780735,
+        "maxFrameGapMs": 30.384999752044678,
+        "settleMs": 25.505000114440918
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 30.800000190734863,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 23.487499952316284,
+      "jumpMedianMs": 10.302499771118164,
+      "computeMedianMs": 7.079999685287476,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.7899999618530273,
+      "secondBrushMs": 6.164999961853027,
+      "drag": {
+        "fps": 59.016456903727416,
+        "maxFrameGapMs": 27.735000133514404,
+        "settleMs": 23.5
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 4,
+      "initMs": 78.84999990463257,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 26.1875,
+      "jumpMedianMs": 12.029999732971191,
+      "computeMedianMs": 2.5925002098083496,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.380000114440918,
+      "secondBrushMs": 5.964999675750732,
+      "drag": {
+        "fps": 59.31342282535497,
+        "maxFrameGapMs": 30.519999980926514,
+        "settleMs": 21.135000228881836
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 4,
+      "initMs": 29.55500030517578,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 21.65250015258789,
+      "jumpMedianMs": 11.97000002861023,
+      "computeMedianMs": 5.482500076293945,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.0349998474121094,
+      "secondBrushMs": 0.9749999046325684,
+      "drag": {
+        "fps": 59.91082127942443,
+        "maxFrameGapMs": 31.019999980926514,
+        "settleMs": 13.175000190734863
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 95.4850001335144,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 26.857499837875366,
+      "jumpMedianMs": 12.27999997138977,
+      "computeMedianMs": 2.732499837875366,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 6.360000133514404,
+      "secondBrushMs": 0.7649998664855957,
+      "drag": {
+        "fps": 60.19475915792812,
+        "maxFrameGapMs": 32.77499961853027,
+        "settleMs": 23.3149995803833
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 45.25999975204468,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 22.757499933242798,
+      "jumpMedianMs": 12.207499980926514,
+      "computeMedianMs": 6.012500047683716,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.260000228881836,
+      "secondBrushMs": 5.230000019073486,
+      "drag": {
+        "fps": 60.53652941862439,
+        "maxFrameGapMs": 38.639999866485596,
+        "settleMs": 13.065000057220459
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "stock",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 1153.3099999427795,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 451.6100001335144,
+      "jumpMedianMs": 320.95499992370605,
+      "computeMedianMs": null,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 83.30999994277954,
+      "secondBrushMs": 83.80500030517578,
+      "drag": {
+        "fps": 11.795698505484767,
+        "maxFrameGapMs": 150.7300000190735,
+        "settleMs": 0.005000114440917969
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 209.28999996185303,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 174.42749977111816,
+      "jumpMedianMs": 85.34750008583069,
+      "computeMedianMs": 24.21499991416931,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 10.049999713897705,
+      "secondBrushMs": 7.204999923706055,
+      "drag": {
+        "fps": 35.332851529839246,
+        "maxFrameGapMs": 170.07499980926514,
+        "settleMs": 123.875
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 43.855000019073486,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 137.10249996185303,
+      "jumpMedianMs": 69.97749996185303,
+      "computeMedianMs": 40.625,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 7.519999980926514,
+      "secondBrushMs": 6.994999885559082,
+      "drag": {
+        "fps": 36.739262314578625,
+        "maxFrameGapMs": 153.41499996185303,
+        "settleMs": 110.34500026702881
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 4,
+      "initMs": 198.05000019073486,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 164.32499980926514,
+      "jumpMedianMs": 77.09249997138977,
+      "computeMedianMs": 8.775000095367432,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 3.804999828338623,
+      "secondBrushMs": 2.5450000762939453,
+      "drag": {
+        "fps": 35.81945329062854,
+        "maxFrameGapMs": 170.91000032424927,
+        "settleMs": 132.21499967575073
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 4,
+      "initMs": 32.91499996185303,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 123.74750018119812,
+      "jumpMedianMs": 71.3675000667572,
+      "computeMedianMs": 26.72249984741211,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 2.9200000762939453,
+      "secondBrushMs": 2.5399999618530273,
+      "drag": {
+        "fps": 35.685822019671676,
+        "maxFrameGapMs": 167.3400001525879,
+        "settleMs": 127.13499975204468
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 16,
+      "initMs": 227.19000005722046,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 160.10249996185303,
+      "jumpMedianMs": 75.91499996185303,
+      "computeMedianMs": 6.46500039100647,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 3.2799997329711914,
+      "secondBrushMs": 2.369999885559082,
+      "drag": {
+        "fps": 34.41583127713604,
+        "maxFrameGapMs": 168.31500005722046,
+        "settleMs": 122.24499988555908
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 16,
+      "initMs": 47.09500026702881,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 125.75500011444092,
+      "jumpMedianMs": 65.24000000953674,
+      "computeMedianMs": 25.59750008583069,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 2.505000114440918,
+      "secondBrushMs": 6.800000190734863,
+      "drag": {
+        "fps": 36.59682094877309,
+        "maxFrameGapMs": 152.4500002861023,
+        "settleMs": 101.3899998664856
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 1,
+      "initMs": 60.99499988555908,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 302.17000007629395,
+      "jumpMedianMs": 131.26749992370605,
+      "computeMedianMs": 78.95499992370605,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 14.84000015258789,
+      "secondBrushMs": 14.079999923706055,
+      "drag": {
+        "fps": 28.453819455492077,
+        "maxFrameGapMs": 334.7599997520447,
+        "settleMs": 286.3600001335144
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 4,
+      "initMs": 38.69999980926514,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 273.039999961853,
+      "jumpMedianMs": 123.76750016212463,
+      "computeMedianMs": 49.140000104904175,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 5.234999656677246,
+      "secondBrushMs": 4.164999961853027,
+      "drag": {
+        "fps": 27.523130019477584,
+        "maxFrameGapMs": 296.80000019073486,
+        "settleMs": 251.3899998664856
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 16,
+      "initMs": 51.799999713897705,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 279.8050000667572,
+      "jumpMedianMs": 127.97250008583069,
+      "computeMedianMs": 46.639999866485596,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 4.049999713897705,
+      "secondBrushMs": 2.630000114440918,
+      "drag": {
+        "fps": 29.00498744883336,
+        "maxFrameGapMs": 289.7649998664856,
+        "settleMs": 240.4700002670288
+      },
+      "rep": 3
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "stock",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 249.67500019073486,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 76.36999988555908,
+      "jumpMedianMs": 46.46000003814697,
+      "computeMedianMs": null,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 17.119999885559082,
+      "secondBrushMs": 16.695000171661377,
+      "drag": {
+        "fps": 38.27934349877812,
+        "maxFrameGapMs": 74.01999998092651,
+        "settleMs": 6.139999866485596
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 114.43000030517578,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 28.295000076293945,
+      "jumpMedianMs": 12.080000162124634,
+      "computeMedianMs": 4.3349997997283936,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.8499999046325684,
+      "secondBrushMs": 1.6750001907348633,
+      "drag": {
+        "fps": 59.68712394705174,
+        "maxFrameGapMs": 32.13000011444092,
+        "settleMs": 20.950000286102295
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 1,
+      "initMs": 31.4399995803833,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 23.634999990463257,
+      "jumpMedianMs": 10.484999895095825,
+      "computeMedianMs": 7.2149999141693115,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.8199996948242188,
+      "secondBrushMs": 1.864999771118164,
+      "drag": {
+        "fps": 59.46757338512591,
+        "maxFrameGapMs": 27.910000324249268,
+        "settleMs": 24.795000076293945
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 4,
+      "initMs": 82.60000038146973,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 26.75249981880188,
+      "jumpMedianMs": 11.807499885559082,
+      "computeMedianMs": 2.5899999141693115,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 1.2149996757507324,
+      "secondBrushMs": 1.1599998474121094,
+      "drag": {
+        "fps": 60.53036124947612,
+        "maxFrameGapMs": 31.25,
+        "settleMs": 17.764999866485596
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 4,
+      "initMs": 29.360000133514404,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 22.367499828338623,
+      "jumpMedianMs": 12.039999961853027,
+      "computeMedianMs": 5.619999885559082,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 0.9749999046325684,
+      "secondBrushMs": 5.994999885559082,
+      "drag": {
+        "fps": 59.89412265653533,
+        "maxFrameGapMs": 27.364999771118164,
+        "settleMs": 19.300000190734863
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 100.96500015258789,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 26.110000133514404,
+      "jumpMedianMs": 11.815000057220459,
+      "computeMedianMs": 2.7775001525878906,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 6.449999809265137,
+      "secondBrushMs": 0.8550000190734863,
+      "drag": {
+        "fps": 59.96943492541855,
+        "maxFrameGapMs": 29.580000400543213,
+        "settleMs": 17.335000038146973
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 45.53500032424927,
+      "rowsSeen": 1000000,
+      "brushMedianMs": 22.475000143051147,
+      "jumpMedianMs": 10.649999856948853,
+      "computeMedianMs": 6.232500076293945,
+      "selectedMedian": 14952.5,
+      "selectedJumpMedian": 5692,
+      "firstBrushMs": 7.179999828338623,
+      "secondBrushMs": 0.8649997711181641,
+      "drag": {
+        "fps": 60.058286056308745,
+        "maxFrameGapMs": 27.539999961853027,
+        "settleMs": 12.9350004196167
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "stock",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 1115.7599997520447,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 447.2524998188019,
+      "jumpMedianMs": 324.52999997138977,
+      "computeMedianMs": null,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 83.05999994277954,
+      "secondBrushMs": 82.63499975204468,
+      "drag": {
+        "fps": 11.881305752585636,
+        "maxFrameGapMs": 142.84999990463257,
+        "settleMs": 0.004999637603759766
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 204.0149998664856,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 176.38000011444092,
+      "jumpMedianMs": 85.72499990463257,
+      "computeMedianMs": 25.019999980926514,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 15.074999809265137,
+      "secondBrushMs": 9.244999885559082,
+      "drag": {
+        "fps": 35.32108067371175,
+        "maxFrameGapMs": 169.51500034332275,
+        "settleMs": 127.40500020980835
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 1,
+      "initMs": 44.78499984741211,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 139.42999982833862,
+      "jumpMedianMs": 72.40000009536743,
+      "computeMedianMs": 40.234999895095825,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 7.75,
+      "secondBrushMs": 6.805000305175781,
+      "drag": {
+        "fps": 37.151595788188864,
+        "maxFrameGapMs": 151.1449999809265,
+        "settleMs": 103.25999975204468
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 4,
+      "initMs": 263.585000038147,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 166.2574999332428,
+      "jumpMedianMs": 77.89250016212463,
+      "computeMedianMs": 9.137500047683716,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 4.139999866485596,
+      "secondBrushMs": 7.119999885559082,
+      "drag": {
+        "fps": 35.37449663158766,
+        "maxFrameGapMs": 168.4249997138977,
+        "settleMs": 129.9249997138977
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 4,
+      "initMs": 33.27999973297119,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 123.90999984741211,
+      "jumpMedianMs": 66.05999994277954,
+      "computeMedianMs": 26.75249981880188,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 3.130000114440918,
+      "secondBrushMs": 2.184999942779541,
+      "drag": {
+        "fps": 36.36889631938071,
+        "maxFrameGapMs": 148.4800000190735,
+        "settleMs": 105.70500040054321
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 16,
+      "initMs": 277.710000038147,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 163.0975000858307,
+      "jumpMedianMs": 76.01500010490417,
+      "computeMedianMs": 5.865000009536743,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 3.0199999809265137,
+      "secondBrushMs": 1.7899999618530273,
+      "drag": {
+        "fps": 33.514604775780676,
+        "maxFrameGapMs": 162.37000036239624,
+        "settleMs": 131.41499996185303
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 16,
+      "initMs": 49.125,
+      "rowsSeen": 5000000,
+      "brushMedianMs": 123.96250009536743,
+      "jumpMedianMs": 64.5475001335144,
+      "computeMedianMs": 25.19499969482422,
+      "selectedMedian": 74818,
+      "selectedJumpMedian": 28385.5,
+      "firstBrushMs": 2.4200000762939453,
+      "secondBrushMs": 6.960000038146973,
+      "drag": {
+        "fps": 36.30030726036103,
+        "maxFrameGapMs": 155.5299997329712,
+        "settleMs": 116.15999984741211
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 1,
+      "initMs": 61.15999984741211,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 292.38499999046326,
+      "jumpMedianMs": 139.8125,
+      "computeMedianMs": 75.82999968528748,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 14.884999752044678,
+      "secondBrushMs": 14.089999675750732,
+      "drag": {
+        "fps": 27.92715357075634,
+        "maxFrameGapMs": 349.77500009536743,
+        "settleMs": 301.0349998474121
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 4,
+      "initMs": 37.954999923706055,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 280.00999999046326,
+      "jumpMedianMs": 122.6749997138977,
+      "computeMedianMs": 49.06750011444092,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 5.235000133514404,
+      "secondBrushMs": 4.164999961853027,
+      "drag": {
+        "fps": 27.85276599808869,
+        "maxFrameGapMs": 326.7200002670288,
+        "settleMs": 249.9099998474121
+      },
+      "rep": 4
+    },
+    {
+      "suite": "scatter",
+      "dataset": "flights",
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 16,
+      "initMs": 52.24499988555908,
+      "rowsSeen": 10000000,
+      "brushMedianMs": 264.3275001049042,
+      "jumpMedianMs": 119.6800000667572,
+      "computeMedianMs": 45.767499923706055,
+      "selectedMedian": 149674.5,
+      "selectedJumpMedian": 56991.5,
+      "firstBrushMs": 3.669999599456787,
+      "secondBrushMs": 2.450000286102295,
+      "drag": {
+        "fps": 27.616876038989897,
+        "maxFrameGapMs": 309.5,
+        "settleMs": 264.2200002670288
+      },
+      "rep": 4
+    }
+  ],
+  "summary": [
+    {
+      "mode": "stock",
+      "n": 1000000,
+      "threads": 1,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 260.453000164032,
+          "sd": 11.984627979642529,
+          "ci95": 14.878495468946799,
+          "min": 249.67500019073486,
+          "max": 280.55000019073486
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 17.04399995803833,
+          "sd": 0.22636816452394629,
+          "ci95": 0.28102814003942056,
+          "min": 16.84000015258789,
+          "max": 17.40500020980835
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 16.870000171661378,
+          "sd": 0.22712890194634425,
+          "ci95": 0.2819725688787164,
+          "min": 16.695000171661377,
+          "max": 17.240000247955322
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 75.02000002861023,
+          "sd": 1.1478362150933423,
+          "ci95": 1.4249984191723515,
+          "min": 73.26500010490417,
+          "max": 76.36999988555908
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 45.397999954223636,
+          "sd": 1.4197230892200345,
+          "ci95": 1.7625364413480522,
+          "min": 43.482500076293945,
+          "max": 46.702499866485596
+        },
+        "computeMs": null,
+        "selected": {
+          "n": 5,
+          "mean": 14952.5,
+          "sd": 0,
+          "ci95": 0,
+          "min": 14952.5,
+          "max": 14952.5
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 39.032860127641996,
+          "sd": 0.9079452563020687,
+          "ci95": 1.1271822041442294,
+          "min": 38.27934349877812,
+          "max": 40.11957589998779
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 74.86100006103516,
+          "sd": 1.8005532182330504,
+          "ci95": 2.2353236950353033,
+          "min": 73.29000043869019,
+          "max": 77.88499975204468
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 9.20999984741211,
+          "sd": 4.232884717756817,
+          "ci95": 5.254977976846425,
+          "min": 6.089999675750732,
+          "max": 14.164999961853027
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 1,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 87.2100001335144,
+          "sd": 15.363812693853678,
+          "ci95": 19.0736348211676,
+          "min": 77.1100001335144,
+          "max": 114.43000030517578
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 1.9170000076293945,
+          "sd": 0.08205194749148431,
+          "ci95": 0.10186461616030269,
+          "min": 1.8499999046325684,
+          "max": 2.0550003051757812
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 2.5020001411437987,
+          "sd": 1.900120365566547,
+          "ci95": 2.3589328177359623,
+          "min": 1.5900001525878906,
+          "max": 5.900000095367432
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 28.16100001335144,
+          "sd": 0.5881448553728887,
+          "ci95": 0.7301612182384077,
+          "min": 27.59000015258789,
+          "max": 29.105000019073486
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 13.437500047683717,
+          "sd": 0.9792406870939946,
+          "ci95": 1.215692981933589,
+          "min": 12.080000162124634,
+          "max": 14.442499876022339
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 4.399999904632568,
+          "sd": 0.08724963377205366,
+          "ci95": 0.10831736145250696,
+          "min": 4.324999809265137,
+          "max": 4.499999761581421
+        },
+        "selected": {
+          "n": 5,
+          "mean": 14952.5,
+          "sd": 0,
+          "ci95": 0,
+          "min": 14952.5,
+          "max": 14952.5
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 59.702642704789035,
+          "sd": 0.45984804171073673,
+          "ci95": 0.5708852220209951,
+          "min": 59.21596157448192,
+          "max": 60.31099072655919
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 31.564999961853026,
+          "sd": 1.405515853033187,
+          "ci95": 1.7448986557120416,
+          "min": 30.384999752044678,
+          "max": 33.77999973297119
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 21.956000137329102,
+          "sd": 2.227042280894201,
+          "ci95": 2.764794914095085,
+          "min": 19.97000026702881,
+          "max": 25.505000114440918
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 1,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 31.19399995803833,
+          "sd": 0.40346002980632073,
+          "ci95": 0.5008814821428887,
+          "min": 30.739999771118164,
+          "max": 31.65000009536743
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 1.8149999618530273,
+          "sd": 0.04153316581248043,
+          "ci95": 0.05156196924941495,
+          "min": 1.7699999809265137,
+          "max": 1.880000114440918
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 3.4339999198913573,
+          "sd": 2.269395230595239,
+          "ci95": 2.8173746163014295,
+          "min": 1.630000114440918,
+          "max": 6.164999961853027
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 23.707999992370606,
+          "sd": 0.1497644293015572,
+          "ci95": 0.18592728840291345,
+          "min": 23.487499952316284,
+          "max": 23.84500002861023
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 10.790999841690063,
+          "sd": 1.0961901819063873,
+          "ci95": 1.3608816796234529,
+          "min": 10.084999799728394,
+          "max": 12.734999656677246
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 7.123499917984009,
+          "sd": 0.0832091257574264,
+          "ci95": 0.1033012124080818,
+          "min": 7.017499923706055,
+          "max": 7.2149999141693115
+        },
+        "selected": {
+          "n": 5,
+          "mean": 14952.5,
+          "sd": 0,
+          "ci95": 0,
+          "min": 14952.5,
+          "max": 14952.5
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 59.37086202029307,
+          "sd": 0.26246610132006304,
+          "ci95": 0.32584246301812775,
+          "min": 59.016456903727416,
+          "max": 59.6532414987805
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 31.149000072479247,
+          "sd": 3.9638905701145823,
+          "ci95": 4.921031173185393,
+          "min": 27.735000133514404,
+          "max": 36.079999923706055
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 20.635000038146973,
+          "sd": 3.328289724981835,
+          "ci95": 4.131955007414546,
+          "min": 17.105000019073486,
+          "max": 24.795000076293945
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 4,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 81.05600004196167,
+          "sd": 2.774255338765618,
+          "ci95": 3.444140740758888,
+          "min": 78.84999990463257,
+          "max": 85.22499990463257
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 1.184999942779541,
+          "sd": 0.11921620897477002,
+          "ci95": 0.14800274385396794,
+          "min": 1.0900001525878906,
+          "max": 1.380000114440918
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 3.947999858856201,
+          "sd": 2.661105511942462,
+          "ci95": 3.3036691976655113,
+          "min": 0.9099998474121094,
+          "max": 5.964999675750732
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 26.230999994277955,
+          "sd": 0.3514415603578448,
+          "ci95": 0.43630237603251437,
+          "min": 25.77500009536743,
+          "max": 26.75249981880188
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 12.344000005722046,
+          "sd": 0.7405902350157562,
+          "ci95": 0.919416812498909,
+          "min": 11.807499885559082,
+          "max": 13.642500162124634
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 2.592500019073486,
+          "sd": 0.05519855400673052,
+          "ci95": 0.06852706959920601,
+          "min": 2.507499933242798,
+          "max": 2.6600000858306885
+        },
+        "selected": {
+          "n": 5,
+          "mean": 14952.5,
+          "sd": 0,
+          "ci95": 0,
+          "min": 14952.5,
+          "max": 14952.5
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 60.06391221165585,
+          "sd": 0.6464941066617748,
+          "ci95": 0.8025997680534537,
+          "min": 59.31342282535497,
+          "max": 60.63376722813938
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 34.001999855041504,
+          "sd": 5.274645165349075,
+          "ci95": 6.5482870495650705,
+          "min": 28.84499979019165,
+          "max": 39.9399995803833
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 20.818000030517577,
+          "sd": 1.9574268479959673,
+          "ci95": 2.4300768065703027,
+          "min": 17.764999866485596,
+          "max": 23.234999656677246
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 4,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 29.67799997329712,
+          "sd": 0.4300375938949174,
+          "ci95": 0.5338765961789294,
+          "min": 29.230000019073486,
+          "max": 30.239999771118164
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 1.0169998168945313,
+          "sd": 0.030331496431293552,
+          "ci95": 0.037655489430789814,
+          "min": 0.9749999046325684,
+          "max": 1.054999828338623
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 4.898999977111816,
+          "sd": 2.1964272509779392,
+          "ci95": 2.726787427783077,
+          "min": 0.9749999046325684,
+          "max": 5.994999885559082
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 21.99800000190735,
+          "sd": 0.28104925596339625,
+          "ci95": 0.3489127980030121,
+          "min": 21.65250015258789,
+          "max": 22.367499828338623
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 11.177499961853027,
+          "sd": 1.0710305128844366,
+          "ci95": 1.329646832602823,
+          "min": 9.997499942779541,
+          "max": 12.039999961853027
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 5.498500013351441,
+          "sd": 0.08235970659942855,
+          "ci95": 0.1022466883031221,
+          "min": 5.417500019073486,
+          "max": 5.619999885559082
+        },
+        "selected": {
+          "n": 5,
+          "mean": 14952.5,
+          "sd": 0,
+          "ci95": 0,
+          "min": 14952.5,
+          "max": 14952.5
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 59.4490733977148,
+          "sd": 0.42778967652872113,
+          "ci95": 0.5310858855782892,
+          "min": 58.97138437197994,
+          "max": 59.91082127942443
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 33.276000022888184,
+          "sd": 3.9585042861540947,
+          "ci95": 4.914344290485595,
+          "min": 27.364999771118164,
+          "max": 36.52500009536743
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 17.93700008392334,
+          "sd": 2.6676735613684768,
+          "ci95": 3.3118232007593726,
+          "min": 13.175000190734863,
+          "max": 19.300000190734863
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-tuples",
+      "n": 1000000,
+      "threads": 16,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 95.34000005722046,
+          "sd": 4.734060142980342,
+          "ci95": 5.877169696606267,
+          "min": 88.14499998092651,
+          "max": 100.96500015258789
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 4.530000019073486,
+          "sd": 2.662510519965082,
+          "ci95": 3.305413465867569,
+          "min": 1.4600000381469727,
+          "max": 6.605000019073486
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 2.8729998588562013,
+          "sd": 2.8254613538157045,
+          "ci95": 3.507711213217413,
+          "min": 0.7649998664855957,
+          "max": 6.034999847412109
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 26.148999977111817,
+          "sd": 0.515917217422058,
+          "ci95": 0.6404931379434181,
+          "min": 25.43499994277954,
+          "max": 26.857499837875366
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 12.298999977111816,
+          "sd": 0.4509800612441733,
+          "ci95": 0.5598759351733271,
+          "min": 11.815000057220459,
+          "max": 12.897499799728394
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 2.7324999809265136,
+          "sd": 0.04531140385365365,
+          "ci95": 0.05625251931669164,
+          "min": 2.6649999618530273,
+          "max": 2.7775001525878906
+        },
+        "selected": {
+          "n": 5,
+          "mean": 14952.5,
+          "sd": 0,
+          "ci95": 0,
+          "min": 14952.5,
+          "max": 14952.5
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 60.14292904718691,
+          "sd": 0.40792427104120593,
+          "ci95": 0.5064236811246469,
+          "min": 59.74665490128155,
+          "max": 60.815213445375306
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 31.322999954223633,
+          "sd": 1.385769421757443,
+          "ci95": 1.7203841535712092,
+          "min": 29.580000400543213,
+          "max": 32.77499961853027
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 18.72299995422363,
+          "sd": 2.5743676676542875,
+          "ci95": 3.1959872049144686,
+          "min": 17.335000038146973,
+          "max": 23.3149995803833
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-table",
+      "n": 1000000,
+      "threads": 16,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 45.61099996566772,
+          "sd": 1.3343745655783035,
+          "ci95": 1.6565792414715257,
+          "min": 43.64999961853027,
+          "max": 47.19000005722046
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 3.6289999961853026,
+          "sd": 3.03563294888093,
+          "ci95": 3.768631880107613,
+          "min": 1.260000228881836,
+          "max": 7.179999828338623
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 2.7920000076293947,
+          "sd": 2.606215272956591,
+          "ci95": 3.2355248903555194,
+          "min": 0.8649997711181641,
+          "max": 6.03000020980835
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 22.708499956130982,
+          "sd": 0.2876336190989438,
+          "ci95": 0.35708705399531754,
+          "min": 22.359999895095825,
+          "max": 23.047499895095825
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 11.08700008392334,
+          "sd": 0.7533619550601496,
+          "ci95": 0.9352724551716682,
+          "min": 10.377500295639038,
+          "max": 12.207499980926514
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 6.041000032424927,
+          "sd": 0.1524754172429523,
+          "ci95": 0.18929288488792168,
+          "min": 5.815000057220459,
+          "max": 6.232500076293945
+        },
+        "selected": {
+          "n": 5,
+          "mean": 14952.5,
+          "sd": 0,
+          "ci95": 0,
+          "min": 14952.5,
+          "max": 14952.5
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 60.18472419406762,
+          "sd": 0.23931539246473318,
+          "ci95": 0.29710166961243994,
+          "min": 59.982103684457805,
+          "max": 60.53652941862439
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 31.092000007629395,
+          "sd": 4.413508443483565,
+          "ci95": 5.479215999868468,
+          "min": 27.539999961853027,
+          "max": 38.639999866485596
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 13.093000030517578,
+          "sd": 0.20574855994919186,
+          "ci95": 0.2554296238603552,
+          "min": 12.929999828338623,
+          "max": 13.434999942779541
+        }
+      }
+    },
+    {
+      "mode": "stock",
+      "n": 5000000,
+      "threads": 1,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 1134.3300000190734,
+          "sd": 16.91831513520771,
+          "ci95": 21.003495102975247,
+          "min": 1115.7599997520447,
+          "max": 1153.3099999427795
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 83.88199996948242,
+          "sd": 0.853204144439097,
+          "ci95": 1.0592230329290853,
+          "min": 83.05999994277954,
+          "max": 84.82499980926514
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 83.37799987792968,
+          "sd": 1.329377695207347,
+          "ci95": 1.6503758020907224,
+          "min": 82.36499977111816,
+          "max": 85.52999973297119
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 450.20199995040895,
+          "sd": 2.563336235110995,
+          "ci95": 3.1822920681617743,
+          "min": 447.2524998188019,
+          "max": 452.4850001335144
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 323.87300000190737,
+          "sd": 1.9922031147405501,
+          "ci95": 2.4732503225163183,
+          "min": 320.95499992370605,
+          "max": 326.40750002861023
+        },
+        "computeMs": null,
+        "selected": {
+          "n": 5,
+          "mean": 74818,
+          "sd": 0,
+          "ci95": 0,
+          "min": 74818,
+          "max": 74818
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 11.850326600105996,
+          "sd": 0.04498660112741379,
+          "ci95": 0.05584928811928859,
+          "min": 11.795698505484767,
+          "max": 11.9012788906937
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 148.60400009155273,
+          "sd": 5.550735849431439,
+          "ci95": 6.891043954419817,
+          "min": 142.7350001335144,
+          "max": 155.0950002670288
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 0.006999969482421875,
+          "sd": 0.0027386319524278827,
+          "ci95": 0.0033999155555370485,
+          "min": 0.004999637603759766,
+          "max": 0.010000228881835938
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 1,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 206.60499992370606,
+          "sd": 2.023076319764375,
+          "ci95": 2.511578324173033,
+          "min": 204.0149998664856,
+          "max": 209.28999996185303
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 14.776999950408936,
+          "sd": 2.9497259302328493,
+          "ci95": 3.66198132826092,
+          "min": 10.049999713897705,
+          "max": 18.22499990463257
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 8.614999961853027,
+          "sd": 0.8125038507223626,
+          "ci95": 1.008695045186966,
+          "min": 7.204999923706055,
+          "max": 9.244999885559082
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 177.9239999294281,
+          "sd": 2.7617435136207678,
+          "ci95": 3.4286077484922846,
+          "min": 174.42749977111816,
+          "max": 181.5350000858307
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 85.33950004577636,
+          "sd": 0.7058358847918461,
+          "ci95": 0.8762705051449399,
+          "min": 84.54500007629395,
+          "max": 86.29250001907349
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 24.65649995803833,
+          "sd": 0.48029166188950706,
+          "ci95": 0.5962652597422642,
+          "min": 24.054999828338623,
+          "max": 25.03500008583069
+        },
+        "selected": {
+          "n": 5,
+          "mean": 74818,
+          "sd": 0,
+          "ci95": 0,
+          "min": 74818,
+          "max": 74818
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 34.7743394121637,
+          "sd": 1.1892910366634983,
+          "ci95": 1.4764631267915833,
+          "min": 33.29485926339113,
+          "max": 36.142110778478006
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 181.58500003814697,
+          "sd": 27.930021237512275,
+          "ci95": 34.674142170770104,
+          "min": 167.0199999809265,
+          "max": 231.5
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 139.6,
+          "sd": 32.525194287941055,
+          "ci95": 40.378888411201196,
+          "min": 123.875,
+          "max": 197.7300000190735
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 1,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 44.32199993133545,
+          "sd": 0.5359056590595039,
+          "ci95": 0.6653080874636883,
+          "min": 43.670000076293945,
+          "max": 44.84499979019165
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 7.646000003814697,
+          "sd": 0.18039537140561762,
+          "ci95": 0.2239545291382098,
+          "min": 7.505000114440918,
+          "max": 7.914999961853027
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 6.916000080108643,
+          "sd": 0.11382007146786784,
+          "ci95": 0.14130362832175158,
+          "min": 6.784999847412109,
+          "max": 7.035000324249268
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 138.1619999408722,
+          "sd": 1.331879996771461,
+          "ci95": 1.6534823217546493,
+          "min": 136.4449999332428,
+          "max": 139.42999982833862
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 72.17250003814698,
+          "sd": 1.6328348937912929,
+          "ci95": 2.027107275259504,
+          "min": 69.97749996185303,
+          "max": 74.54499983787537
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 40.55649995803833,
+          "sd": 0.2118342705234976,
+          "ci95": 0.2629848201800853,
+          "min": 40.234999895095825,
+          "max": 40.8199999332428
+        },
+        "selected": {
+          "n": 5,
+          "mean": 74818,
+          "sd": 0,
+          "ci95": 0,
+          "min": 74818,
+          "max": 74818
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 36.24715219143297,
+          "sd": 0.7016141984605538,
+          "ci95": 0.8710294295722861,
+          "min": 35.4064906524043,
+          "max": 37.151595788188864
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 173.24300003051758,
+          "sd": 20.327657458982053,
+          "ci95": 25.236074070176375,
+          "min": 151.1449999809265,
+          "max": 198.07499980926514
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 131.55999994277954,
+          "sd": 23.751429646802723,
+          "ci95": 29.486567207695973,
+          "min": 103.25999975204468,
+          "max": 158.97499990463257
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 4,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 219.33399991989137,
+          "sd": 32.52181411397921,
+          "ci95": 40.37469204373272,
+          "min": 193.71999979019165,
+          "max": 263.585000038147
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 3.690999984741211,
+          "sd": 0.34437257668256865,
+          "ci95": 0.42752648063039506,
+          "min": 3.184999942779541,
+          "max": 4.139999866485596
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 5.938999843597412,
+          "sd": 1.9957747936856691,
+          "ci95": 2.4776844367075768,
+          "min": 2.5450000762939453,
+          "max": 7.424999713897705
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 163.41799993515014,
+          "sd": 4.579966260268839,
+          "ci95": 5.685867543580746,
+          "min": 155.88000011444092,
+          "max": 167.6599998474121
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 78.06050004959107,
+          "sd": 1.1467595487188362,
+          "ci95": 1.4236617756151326,
+          "min": 76.8675000667572,
+          "max": 79.5074999332428
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 8.636499977111816,
+          "sd": 0.3323524816789713,
+          "ci95": 0.4126039540946429,
+          "min": 8.317500114440918,
+          "max": 9.137500047683716
+        },
+        "selected": {
+          "n": 5,
+          "mean": 74818,
+          "sd": 0,
+          "ci95": 0,
+          "min": 74818,
+          "max": 74818
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 35.40313202653461,
+          "sd": 0.28644580985233414,
+          "ci95": 0.3556124304589279,
+          "min": 35.108837389769846,
+          "max": 35.81945329062854
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 168.82399988174438,
+          "sd": 1.762198326041075,
+          "ci95": 2.1877074410589934,
+          "min": 166.11999988555908,
+          "max": 170.91000032424927
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 130.01899995803834,
+          "sd": 1.7174193635748969,
+          "ci95": 2.1321159290580476,
+          "min": 127.51500034332275,
+          "max": 132.21499967575073
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 4,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 33.02399988174439,
+          "sd": 0.3646301522165051,
+          "ci95": 0.4526755504476219,
+          "min": 32.63499975204468,
+          "max": 33.515000343322754
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 2.999000072479248,
+          "sd": 0.1170148900494139,
+          "ci95": 0.14526988358394105,
+          "min": 2.8450002670288086,
+          "max": 3.130000114440918
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 2.334999942779541,
+          "sd": 0.16481058779712526,
+          "ci95": 0.2046065666735137,
+          "min": 2.184999942779541,
+          "max": 2.5399999618530273
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 124.11299996376037,
+          "sd": 1.1175718874733758,
+          "ci95": 1.3874263174659602,
+          "min": 123.02999973297119,
+          "max": 126.0074999332428
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 68.09950003623962,
+          "sd": 3.150691213033864,
+          "ci95": 3.9114726812382106,
+          "min": 65.09249997138977,
+          "max": 71.65750026702881
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 26.725999879837037,
+          "sd": 0.18941195824812956,
+          "ci95": 0.23514830559164296,
+          "min": 26.419999837875366,
+          "max": 26.93499994277954
+        },
+        "selected": {
+          "n": 5,
+          "mean": 74818,
+          "sd": 0,
+          "ci95": 0,
+          "min": 74818,
+          "max": 74818
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 36.17599549663682,
+          "sd": 0.3469636362892457,
+          "ci95": 0.4307431902924054,
+          "min": 35.685822019671676,
+          "max": 36.60824599405142
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 154.19399995803832,
+          "sd": 8.391757509645112,
+          "ci95": 10.418072742503204,
+          "min": 147.72499990463257,
+          "max": 167.3400001525879
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 114.59099998474122,
+          "sd": 8.676467477230807,
+          "ci95": 10.771530185644806,
+          "min": 105.70500040054321,
+          "max": 127.13499975204468
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-tuples",
+      "n": 5000000,
+      "threads": 16,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 240.15100002288818,
+          "sd": 21.84569940568959,
+          "ci95": 27.12066992614494,
+          "min": 226.25,
+          "max": 277.710000038147
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 3.7589999198913575,
+          "sd": 0.7286838078545026,
+          "ci95": 0.9046354006043581,
+          "min": 3.0199999809265137,
+          "max": 4.900000095367432
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 2.1189998626708983,
+          "sd": 0.25676831012802587,
+          "ci95": 0.3187688550114603,
+          "min": 1.7899999618530273,
+          "max": 2.3849997520446777
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 161.28399996757508,
+          "sd": 2.625104449665949,
+          "ci95": 3.2589751410065793,
+          "min": 157.23250007629395,
+          "max": 163.5499997138977
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 74.34450001716614,
+          "sd": 1.7318283674768844,
+          "ci95": 2.1500042022386516,
+          "min": 72.48250007629395,
+          "max": 76.01500010490417
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 6.279500150680542,
+          "sd": 0.38424208913244745,
+          "ci95": 0.4770230825559838,
+          "min": 5.862499952316284,
+          "max": 6.632500171661377
+        },
+        "selected": {
+          "n": 5,
+          "mean": 74818,
+          "sd": 0,
+          "ci95": 0,
+          "min": 74818,
+          "max": 74818
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 34.528778963946884,
+          "sd": 0.6830277749761203,
+          "ci95": 0.8479550364357776,
+          "min": 33.514604775780676,
+          "max": 35.24879777211858
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 161.03300008773803,
+          "sd": 9.105319115166289,
+          "ci95": 11.3039344590784,
+          "min": 145.21499967575073,
+          "max": 168.31500005722046
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 129.65599994659425,
+          "sd": 8.07221731990026,
+          "ci95": 10.021374799660009,
+          "min": 122.24499988555908,
+          "max": 142.82999992370605
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-table",
+      "n": 5000000,
+      "threads": 16,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 49.15200004577637,
+          "sd": 1.4731920103192104,
+          "ci95": 1.8289162323315427,
+          "min": 47.09500026702881,
+          "max": 50.894999980926514
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 2.4769999504089357,
+          "sd": 0.05322120016661907,
+          "ci95": 0.0660722541305426,
+          "min": 2.4200000762939453,
+          "max": 2.554999828338623
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 5.882000064849853,
+          "sd": 2.385420855977297,
+          "ci95": 2.9614163624833707,
+          "min": 1.625,
+          "max": 7.210000038146973
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 124.3220000743866,
+          "sd": 1.0916063009342585,
+          "ci95": 1.3551909521023433,
+          "min": 123.34500026702881,
+          "max": 125.75500011444092
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 67.18899998664855,
+          "sd": 3.3659825897837528,
+          "ci95": 4.178749377596047,
+          "min": 64.4375,
+          "max": 70.9599997997284
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 25.10599994659424,
+          "sd": 0.3085480329735899,
+          "ci95": 0.3830515655845109,
+          "min": 24.829999923706055,
+          "max": 25.59750008583069
+        },
+        "selected": {
+          "n": 5,
+          "mean": 74818,
+          "sd": 0,
+          "ci95": 0,
+          "min": 74818,
+          "max": 74818
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 36.54817091308005,
+          "sd": 0.37507857863099275,
+          "ci95": 0.46564690553095395,
+          "min": 36.17320388051308,
+          "max": 37.1463002704622
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 151.2679998397827,
+          "sd": 4.625950734398973,
+          "ci95": 5.74295565604859,
+          "min": 146.25999975204468,
+          "max": 155.56999969482422
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 107.61599988937378,
+          "sd": 8.378145261332094,
+          "ci95": 10.401173613452938,
+          "min": 99.48499965667725,
+          "max": 117.07999992370605
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 1,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 61.028999996185306,
+          "sd": 0.43009313491839923,
+          "ci95": 0.5339455484123753,
+          "min": 60.55999994277954,
+          "max": 61.68000030517578
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 14.485999965667725,
+          "sd": 0.3463632127512053,
+          "ci95": 0.4299977855201123,
+          "min": 14.199999809265137,
+          "max": 14.884999752044678
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 13.812999820709228,
+          "sd": 0.3144359647516145,
+          "ci95": 0.3903612264625635,
+          "min": 13.394999980926514,
+          "max": 14.089999675750732
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 294.58650002479555,
+          "sd": 5.382716187312357,
+          "ci95": 6.682453434482184,
+          "min": 287.44749999046326,
+          "max": 302.17000007629395
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 135.97199993133546,
+          "sd": 4.066832542746539,
+          "ci95": 5.048830023176454,
+          "min": 131.26749992370605,
+          "max": 140.58750009536743
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 76.48799986839295,
+          "sd": 2.2373194094679993,
+          "ci95": 2.7775536089147135,
+          "min": 74.1875,
+          "max": 78.95499992370605
+        },
+        "selected": {
+          "n": 5,
+          "mean": 149674.5,
+          "sd": 0,
+          "ci95": 0,
+          "min": 149674.5,
+          "max": 149674.5
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 27.270254653988587,
+          "sd": 0.9853757089142777,
+          "ci95": 1.2233093964364024,
+          "min": 26.124232597117214,
+          "max": 28.453819455492077
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 342.435000038147,
+          "sd": 22.59306522438301,
+          "ci95": 28.048498388235217,
+          "min": 317.1749997138977,
+          "max": 377.1800003051758
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 315.7289999961853,
+          "sd": 38.25030493900405,
+          "ci95": 47.48641256845924,
+          "min": 284.25,
+          "max": 375.05999994277954
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 4,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 38.45999994277954,
+          "sd": 0.8891147209880848,
+          "ci95": 1.1038047547296246,
+          "min": 37.644999980926514,
+          "max": 39.894999980926514
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 5.1749999046325685,
+          "sd": 0.10470194065096396,
+          "ci95": 0.12998378858413004,
+          "min": 5,
+          "max": 5.25
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 4.219000053405762,
+          "sd": 0.081194268523791,
+          "ci95": 0.10079983779118583,
+          "min": 4.150000095367432,
+          "max": 4.315000057220459
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 282.5115000247955,
+          "sd": 7.440117737871789,
+          "ci95": 9.236645329282718,
+          "min": 273.039999961853,
+          "max": 293.4874999523163
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 130.96299986839296,
+          "sd": 7.191727269102668,
+          "ci95": 8.928277270600502,
+          "min": 122.6749997138977,
+          "max": 137.9599997997284
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 49.087000131607056,
+          "sd": 0.3183719113443335,
+          "ci95": 0.3952475661674972,
+          "min": 48.5625,
+          "max": 49.390000104904175
+        },
+        "selected": {
+          "n": 5,
+          "mean": 149674.5,
+          "sd": 0,
+          "ci95": 0,
+          "min": 149674.5,
+          "max": 149674.5
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 27.975522832813926,
+          "sd": 0.6036202764461186,
+          "ci95": 0.7493734109497047,
+          "min": 27.448937943143218,
+          "max": 28.94680662887175
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 312.01800003051756,
+          "sd": 20.8956409921199,
+          "ci95": 25.9412057136936,
+          "min": 284.2400002479553,
+          "max": 334.12999963760376
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 253.14899997711183,
+          "sd": 4.76738190149301,
+          "ci95": 5.918537491575808,
+          "min": 249.01000022888184,
+          "max": 260.7550001144409
+        }
+      }
+    },
+    {
+      "mode": "pwfilter-table",
+      "n": 10000000,
+      "threads": 16,
+      "reps": 5,
+      "errors": [],
+      "metrics": {
+        "initMs": {
+          "n": 5,
+          "mean": 51.190999794006345,
+          "sd": 1.0175362906299215,
+          "ci95": 1.2632356311220092,
+          "min": 49.66999959945679,
+          "max": 52.24499988555908
+        },
+        "firstBrushMs": {
+          "n": 5,
+          "mean": 3.914999771118164,
+          "sd": 0.17979168281557872,
+          "ci95": 0.22320507091832964,
+          "min": 3.669999599456787,
+          "max": 4.049999713897705
+        },
+        "secondBrushMs": {
+          "n": 5,
+          "mean": 2.5100000381469725,
+          "sd": 0.08746430404626704,
+          "ci95": 0.1085838670718409,
+          "min": 2.4099998474121094,
+          "max": 2.630000114440918
+        },
+        "sweepMs": {
+          "n": 5,
+          "mean": 272.74000000953674,
+          "sd": 10.754952468590249,
+          "ci95": 13.351896433036476,
+          "min": 263.2024998664856,
+          "max": 287.97499990463257
+        },
+        "jumpMs": {
+          "n": 5,
+          "mean": 124.1630000114441,
+          "sd": 3.401234809385935,
+          "ci95": 4.222513772328392,
+          "min": 119.6800000667572,
+          "max": 127.97250008583069
+        },
+        "computeMs": {
+          "n": 5,
+          "mean": 46.065000009536746,
+          "sd": 1.4271704572683714,
+          "ci95": 1.7717820876835892,
+          "min": 44.2425000667572,
+          "max": 48.105000019073486
+        },
+        "selected": {
+          "n": 5,
+          "mean": 149674.5,
+          "sd": 0,
+          "ci95": 0,
+          "min": 149674.5,
+          "max": 149674.5
+        },
+        "dragFps": {
+          "n": 5,
+          "mean": 28.01486288965453,
+          "sd": 0.8495449304302796,
+          "ci95": 1.0546802470251275,
+          "min": 27.057192141631127,
+          "max": 29.00498744883336
+        },
+        "dragMaxGapMs": {
+          "n": 5,
+          "mean": 299.7590000152588,
+          "sd": 13.959355829380556,
+          "ci95": 17.330050862625917,
+          "min": 286.1150002479553,
+          "max": 318.9949998855591
+        },
+        "dragSettleMs": {
+          "n": 5,
+          "mean": 259.8480001449585,
+          "sd": 34.609259343004126,
+          "ci95": 42.96618211205007,
+          "min": 237.92999982833862,
+          "max": 318.52500009536743
+        }
+      }
+    }
+  ]
+}

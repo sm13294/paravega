@@ -1,0 +1,122 @@
+{
+  "threads": 16,
+  "results": [
+    {
+      "vega": "6.4.0",
+      "spec": "vl-point",
+      "mode": "stock",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 2289.3599996566772,
+      "updateMs": null,
+      "updateMaxMs": null,
+      "phases": []
+    },
+    {
+      "vega": "6.4.0",
+      "spec": "vl-point",
+      "mode": "paraweb-items",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 2202.085000038147,
+      "updateMs": null,
+      "updateMaxMs": null,
+      "phases": []
+    },
+    {
+      "vega": "6.4.0",
+      "spec": "vl-point",
+      "mode": "paraweb",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 911.5950002670288,
+      "updateMs": null,
+      "updateMaxMs": null,
+      "phases": [
+        {
+          "rows": 10.974999904632568,
+          "bound": 34.610000133514404,
+          "draw": 728.5649995803833
+        }
+      ]
+    },
+    {
+      "vega": "6.4.0",
+      "spec": "vl-linked",
+      "mode": "stock",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 2337.7349996566772,
+      "updateMs": 1000.710000038147,
+      "updateMaxMs": 1144.7149996757507,
+      "phases": []
+    },
+    {
+      "vega": "6.4.0",
+      "spec": "vl-linked",
+      "mode": "paraweb-items",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 2334.375,
+      "updateMs": 1630.9499998092651,
+      "updateMaxMs": 1828.5400004386902,
+      "phases": []
+    },
+    {
+      "vega": "6.4.0",
+      "spec": "vl-linked",
+      "mode": "paraweb",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 907.5700001716614,
+      "updateMs": 306.9650001525879,
+      "updateMaxMs": 328.8650002479553,
+      "phases": [
+        {
+          "rows": 2.8249998092651367,
+          "bound": 8.630000114440918,
+          "draw": 279.34999990463257
+        }
+      ]
+    },
+    {
+      "vega": "6.4.0",
+      "spec": "vega-symbol",
+      "mode": "stock",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 1109.170000076294,
+      "updateMs": 502.0950002670288,
+      "updateMaxMs": 2182.7350001335144,
+      "phases": []
+    },
+    {
+      "vega": "6.4.0",
+      "spec": "vega-symbol",
+      "mode": "paraweb-items",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 1561.7750000953674,
+      "updateMs": 421.1399998664856,
+      "updateMaxMs": 1667.005000114441,
+      "phases": []
+    },
+    {
+      "vega": "6.4.0",
+      "spec": "vega-symbol",
+      "mode": "paraweb",
+      "n": 1000000,
+      "threads": 16,
+      "initMs": 998.960000038147,
+      "updateMs": 211.69499969482422,
+      "updateMaxMs": 944.8049998283386,
+      "phases": [
+        {
+          "rows": 4.605000019073486,
+          "bound": 2.820000171661377,
+          "draw": 198.78999996185303
+        }
+      ]
+    }
+  ]
+}

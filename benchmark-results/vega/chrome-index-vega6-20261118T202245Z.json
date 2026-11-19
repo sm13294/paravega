@@ -1,0 +1,97 @@
+{
+  "threads": 16,
+  "results": [
+    {
+      "vega": "6.4.0",
+      "spec": "vega-crossfilter",
+      "mode": "paraweb-index",
+      "n": 1000000,
+      "threads": 16,
+      "isolated": true,
+      "active": true,
+      "initMs": 168.49499988555908,
+      "firstMs": 9.239999771118164,
+      "updateMs": 0.4850001335144043,
+      "updateP95Ms": 11.464999675750732,
+      "updateMaxMs": 11.464999675750732,
+      "mem": {
+        "bytes": 756195365,
+        "kind": "all"
+      },
+      "concurrent": 3,
+      "fallbacks": [],
+      "rendererMB": 976.3125,
+      "check": 4610738,
+      "checkFresh": null
+    },
+    {
+      "vega": "6.4.0",
+      "spec": "vl-crossfilter",
+      "mode": "paraweb-index",
+      "n": 1000000,
+      "threads": 16,
+      "isolated": true,
+      "active": true,
+      "initMs": 202.06999969482422,
+      "firstMs": 18.96500015258789,
+      "updateMs": 0.8600001335144043,
+      "updateP95Ms": 26.490000247955322,
+      "updateMaxMs": 26.490000247955322,
+      "mem": {
+        "bytes": 754475187,
+        "kind": "all"
+      },
+      "concurrent": 6,
+      "fallbacks": [],
+      "rendererMB": 983.0625,
+      "check": 2982803747.309605,
+      "checkFresh": null
+    },
+    {
+      "vega": "6.4.0",
+      "spec": "vega-crossfilter",
+      "mode": "paraweb-index",
+      "n": 10000000,
+      "threads": 16,
+      "isolated": true,
+      "active": true,
+      "initMs": 872.6900000572205,
+      "firstMs": 20.914999961853027,
+      "updateMs": 0.684999942779541,
+      "updateP95Ms": 54.55000019073486,
+      "updateMaxMs": 54.55000019073486,
+      "mem": {
+        "bytes": 7002479633,
+        "kind": "all"
+      },
+      "concurrent": 3,
+      "fallbacks": [],
+      "rendererMB": 2622.609375,
+      "check": 44865174,
+      "checkFresh": null
+    },
+    {
+      "vega": "6.4.0",
+      "spec": "vl-crossfilter",
+      "mode": "paraweb-index",
+      "n": 10000000,
+      "threads": 16,
+      "isolated": true,
+      "active": true,
+      "initMs": 1149.5149998664856,
+      "firstMs": 36.260000228881836,
+      "updateMs": 1.799999713897705,
+      "updateP95Ms": 47.355000019073486,
+      "updateMaxMs": 47.355000019073486,
+      "mem": {
+        "bytes": 7000700631,
+        "kind": "all"
+      },
+      "concurrent": 6,
+      "fallbacks": [],
+      "rendererMB": 2620.421875,
+      "check": 29839500700.98439,
+      "checkFresh": null
+    }
+  ]
+}

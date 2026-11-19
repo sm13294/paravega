@@ -1,0 +1,33 @@
+[three] synthetic  stock            0/301 bins differ  ok
+[three] synthetic  crossfilter      13/301 bins differ (max 0.04%)  FAIL
+[three] synthetic  inline           0/301 bins differ  ok
+[three] synthetic  tuples           0/301 bins differ  ok
+[three] synthetic  preagg           0/301 bins differ  ok
+[three] synthetic  gpu              0/301 bins differ  ok
+[three] synthetic  mosaic-nopreagg  0/301 bins differ  ok
+[three] synthetic  mosaic           189/301 bins differ (max 64.04%)  (approximate by design)
+[three] synthetic  mosaic-noconsol  189/301 bins differ (max 64.04%)  (approximate by design)
+[three] synthetic  falcon-arrow     209/301 bins differ (max 11.76%)  (approximate by design)
+[three] synthetic  falcon-duckdb    202/301 bins differ (max 11.76%)  (approximate by design)
+[three] flights    stock            0/292 bins differ  ok
+[three] flights    crossfilter      163/292 bins differ (max 3.50%)  FAIL
+[three] flights    inline           0/292 bins differ  ok
+[three] flights    tuples           0/292 bins differ  ok
+[three] flights    preagg           0/292 bins differ  ok
+[three] flights    gpu              0/292 bins differ  ok
+[three] flights    mosaic-nopreagg  0/292 bins differ  ok
+[three] flights    mosaic           135/292 bins differ (max 133.33%)  (approximate by design)
+[three] flights    mosaic-noconsol  135/292 bins differ (max 133.33%)  (approximate by design)
+[three] flights    falcon-arrow     215/292 bins differ (max 583.33%)  (approximate by design)
+[three] flights    falcon-duckdb    188/292 bins differ (max 100.00%)  (approximate by design)
+[wide] flights    stock            0/632 bins differ  ok
+[wide] flights    crossfilter      364/632 bins differ (max 50.00%)  FAIL
+[wide] flights    inline           0/632 bins differ  ok
+[wide] flights    tuples           0/632 bins differ  ok
+[wide] flights    preagg           0/632 bins differ  ok
+[wide] flights    gpu              0/632 bins differ  ok
+[wide] flights    mosaic-nopreagg  0/632 bins differ  ok
+[wide] flights    mosaic           333/632 bins differ (max 42.86%)  (approximate by design)
+[wide] flights    mosaic-noconsol  333/632 bins differ (max 42.86%)  (approximate by design)
+[wide] flights    falcon-arrow     369/538 bins differ (max 511.53%)  (approximate by design)
+[wide] flights    falcon-duckdb    249/538 bins differ (max 100.00%)  (approximate by design)

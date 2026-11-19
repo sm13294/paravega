@@ -1,0 +1,23 @@
+{
+  "captured_at": "2026-11-19T01:56:04+01:00",
+  "hostname": "(removed)",
+  "os": "Darwin 27.0.0",
+  "distro": "27.0.1",
+  "cpu_model": "Apple M3 Max",
+  "cpu_logical": "16",
+  "cpu_cores": "16",
+  "cpu_perf_cores": "12",
+  "cpu_eff_cores": "4",
+  "governor": "",
+  "scaling_driver": "",
+  "smt": "",
+  "loadavg": "2.72 3.63 4.04",
+  "thermal_warning": "none",
+  "webgpu_adapter": "apple / metal-3 / apple-m3-max",
+  "node": "v22.19.0",
+  "npm": "11.8.0",
+  "tsc": "Version 5.9.3",
+  "git_commit": "6e4d5b2",
+  "git_dirty": "yes",
+  "schema": 1
+}
