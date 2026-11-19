@@ -26,6 +26,8 @@ const threadsParam = q.get("threads") || "auto";
 const mainThread = threadsParam === "0";
 const threads = mainThread ? 1 : threadsParam === "auto" ? cores : Math.max(1, Number(threadsParam) || cores);
 const workersText = mainThread ? "the main thread (no workers)" : `${threads} worker${threads > 1 ? "s" : ""}`;
+// Length of the replayed drag (the paper's benchmark: 1 s); longer drags are easier to watch.
+const dragMs = [1000, 3000, 5000].includes(Number(q.get("drag"))) ? Number(q.get("drag")) : 1000;
 const BINS = { distance: { extent: [0, 4000], maxbins: 40 }, delay: { extent: [-60, 180], maxbins: 40 }, time: { extent: [0, 24], maxbins: 24 } };
 
 // ---- controls (every change reloads the page, so each engine starts clean)
@@ -37,6 +39,7 @@ for (const b of $("engines").querySelectorAll("button")) {
 $("rows").value = String(rows);
 if (!$("rows").value) { $("rows").value = "1000000"; }
 $("rows").onchange = () => go({ rows: $("rows").value });
+if ($("dragLen")) { $("dragLen").value = String(dragMs); $("dragLen").onchange = () => go({ drag: $("dragLen").value }); }
 $("threads").value = ["0", "1", "2", "4", "8", "16"].includes(threadsParam) ? threadsParam : "auto";
 $("threads").disabled = engine === "stock";
 $("threads").onchange = () => go({ threads: $("threads").value });
@@ -132,7 +135,7 @@ function updateLag() {
 }
 const startLagWatch = () => { lagMax = 0; lagWatch = true; };
 const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
-const fmt = ms => (ms >= 1000 ? (ms / 1000).toFixed(1) + " s" : ms >= 10 ? ms.toFixed(0) + " ms" : ms.toFixed(1) + " ms");
+const fmt = v => (v >= 100 ? Math.round(v).toLocaleString("en") : v >= 10 ? v.toFixed(0) : v.toFixed(1)) + " ms"; // always milliseconds
 
 // ---- data: synthetic flights-like rows (seeded, as in the paper's synthetic data)
 function makeTuples(n, seed = 42) {
@@ -254,7 +257,7 @@ async function idle(view) { // until no evaluation runs for two frames
 async function replay(view) {
   if (PAGE === "distributions" && !brushX) brushX = findSignal(view._runtime, "b_x");
   $("replay").disabled = true;
-  $("status").textContent = "replaying a one-second drag…";
+  $("status").textContent = `replaying a ${dragMs / 1000}-second drag…`;
   // The same start for every run: the other brushes cleared, this one at its start position.
   if (PAGE === "crossfilter") { view.signal("distance_px", null); view.signal("delay_px", null); }
   setBrush(view, 0);
@@ -265,7 +268,7 @@ async function replay(view) {
   let k = 0;
   await new Promise(resolve => {
     const id = setInterval(() => {
-      const u = Math.min(1, (performance.now() - t0) / 1000);
+      const u = Math.min(1, (performance.now() - t0) / dragMs);
       noteInput(performance.now());
       setBrush(view, u);
       k++;
@@ -283,13 +286,13 @@ async function replay(view) {
   const sorted = [...replayLat].sort((a, b) => a - b);
   replayLat = null;
   const res = {
-    positions: k, updates: sorted.length,
+    dragMs, positions: k, updates: sorted.length,
     medianMs: sorted.length ? sorted[sorted.length >> 1] : null,
     maxLagMs: lagMax, maxGapMs: dragMax, settleMs,
   };
   $("gapMs").textContent = fmt(dragMax);
   $("settleMs").textContent = fmt(res.settleMs);
-  $("status").textContent = `${rows.toLocaleString()} rows · ${k} brush positions in one second`;
+  $("status").textContent = `${rows.toLocaleString()} rows · ${k} brush positions in ${dragMs / 1000 === 1 ? "one second" : dragMs / 1000 + " seconds"}`;
   $("replay").disabled = false;
   return res;
 }
@@ -311,18 +314,20 @@ function storeRun(res, batch) {
   save(RUNS_KEY, runs.slice(-500));
   renderRuns();
 }
-const cell = v => v === null || v === undefined ? "–" : typeof v === "number" ? fmt(v) : String(v);
+// Results in milliseconds (the unit is in the column header): plain numbers, easy to compare.
+const ms = v => v === null || v === undefined ? "–" : v >= 100 ? Math.round(v).toLocaleString("en") : v >= 10 ? v.toFixed(1) : v.toFixed(2);
+const cell = v => typeof v === "number" ? ms(v) : v === null || v === undefined ? "–" : String(v);
 function renderRuns() {
   const runs = load(RUNS_KEY, []);
   const body = $("runsBody");
   if (!body) return;
-  body.innerHTML = runs.length ? "" : `<tr><td colspan="11" class="note">No runs yet: press "Replay a one-second drag", or benchmark all configurations.</td></tr>`;
+  body.innerHTML = runs.length ? "" : `<tr><td colspan="12" class="note">No runs yet: press "Replay a one-second drag", or benchmark all configurations.</td></tr>`;
   for (const r of [...runs].reverse()) {
     const tr = document.createElement("tr");
     const cur = r.page === PAGE && r.engine === engineLabel() && r.workers === workersLabel() && r.rows === rows;
     if (cur) tr.className = "cur";
     const vals = [new Date(r.when).toLocaleTimeString(), pageName[r.page] || r.page, r.engine, r.workers, Number(r.rows).toLocaleString(),
-      r.error ? r.error : r.positions, cell(r.medianMs), cell(r.maxLagMs), cell(r.maxGapMs), cell(r.settleMs), cell(r.firstViewMs)];
+      r.error ? r.error : r.positions, cell(r.dragMs || 1000), cell(r.medianMs), cell(r.maxLagMs), cell(r.maxGapMs), cell(r.settleMs), cell(r.firstViewMs)];
     vals.forEach((v, i) => { const td = document.createElement("td"); td.textContent = v; if (i >= 4) td.className = "num"; tr.appendChild(td); });
     body.appendChild(tr);
   }
@@ -352,7 +357,7 @@ async function renderChart() {
   const host = $("runsChart");
   if (!host || typeof vegaLite === "undefined") return;
   const metric = $("chartMetric").value, scope = $("chartScope").value;
-  let runs = load(RUNS_KEY, []).filter(r => r.page === PAGE && !r.error && r[metric] > 0);
+  let runs = load(RUNS_KEY, []).filter(r => r.page === PAGE && !r.error && r[metric] > 0 && (r.dragMs || 1000) === dragMs);
   if (scope === "batch") {
     const last = [...runs].reverse().find(r => r.batch);
     runs = last ? runs.filter(r => r.batch === last.batch) : [];
@@ -395,8 +400,11 @@ async function renderChart() {
 
 function downloadRuns() {
   const runs = load(RUNS_KEY, []);
-  const cols = ["when", "batch", "page", "engine", "workers", "rows", "positions", "updates", "medianMs", "maxLagMs", "maxGapMs", "settleMs", "firstViewMs", "error", "cores", "vega", "isolated", "gpu"];
-  const csv = [cols.join(",")].concat(runs.map(r => cols.map(c => r[c] === undefined || r[c] === null ? "" : JSON.stringify(r[c])).join(","))).join("\n");
+  const cols = ["when", "batch", "page", "engine", "workers", "rows", "dragMs", "positions", "updates", "medianMs", "maxLagMs", "maxGapMs", "settleMs", "firstViewMs", "error", "cores", "vega", "isolated", "gpu"];
+  // Header with units; times are milliseconds, rounded to 0.01 ms.
+  const head = { dragMs: "drag_ms", medianMs: "median_update_ms", maxLagMs: "largest_lag_ms", maxGapMs: "largest_frame_gap_ms", settleMs: "after_drag_ms", firstViewMs: "first_view_ms" };
+  const val = (c, v) => v === undefined || v === null ? "" : /Ms$/.test(c) && typeof v === "number" ? v.toFixed(2) : JSON.stringify(v);
+  const csv = [cols.map(c => head[c] || c).join(",")].concat(runs.map(r => cols.map(c => val(c, r[c] ?? (c === "dragMs" ? 1000 : r[c]))).join(","))).join("\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
   a.download = "paravega-showcase-runs.csv";
@@ -422,11 +430,12 @@ function gotoConfig(c) {
   u.set("engine", c.engine); u.set("rows", String(c.rows));
   if (c.threads) u.set("threads", c.threads);
   if (c.gpumode) u.set("gpumode", c.gpumode);
+  if (c.drag && c.drag !== 1000) u.set("drag", String(c.drag));
   location.search = u.toString();
 }
 function startBench() {
   const sizes = $("benchSizes").value === "all" ? SIZES : [rows];
-  const configs = benchConfigs(sizes);
+  const configs = benchConfigs(sizes).map(c => ({ ...c, drag: dragMs }));
   const batch = new Date().toISOString().slice(0, 19);
   save(BENCH_KEY, { page: PAGE, batch, configs, i: 0 });
   gotoConfig(configs[0]);
@@ -479,7 +488,7 @@ function setupRuns() {
 <div class="tools" style="margin-top:4px"><label>Chart <select id="chartMetric">${Object.entries(METRICS).map(([k, t]) => `<option value="${k}">${t.replace(/ \(ms\)/, "")}</option>`).join("")}</select></label>
   <label>of <select id="chartScope"><option value="batch">the latest benchmark</option><option value="all">all runs (latest per configuration and size)</option></select></label></div>
 <div id="runsChart" style="width:100%;margin:0 0 12px"></div>
-<div class="scroll"><table><thead><tr><th>Time</th><th>Page</th><th>Engine</th><th>Workers</th><th class="num">Rows</th><th class="num">Positions</th><th class="num">Median update</th><th class="num">Largest lag</th><th class="num">Largest frame gap</th><th class="num">After the drag</th><th class="num">First view</th></tr></thead><tbody id="runsBody"></tbody></table></div></div>`;
+<div class="scroll"><table><thead><tr><th>Time</th><th>Page</th><th>Engine</th><th>Workers</th><th class="num">Rows</th><th class="num">Positions</th><th class="num">Drag (ms)</th><th class="num">Median update (ms)</th><th class="num">Largest lag (ms)</th><th class="num">Largest frame gap (ms)</th><th class="num">After the drag (ms)</th><th class="num">First view (ms)</th></tr></thead><tbody id="runsBody"></tbody></table></div></div>`;
   document.body.appendChild(sec);
   $("benchRun").onclick = startBench;
   $("benchStop").onclick = stopBench;
