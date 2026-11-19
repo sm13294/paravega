@@ -179,7 +179,8 @@ async function main() {
   const view = new vega.View(vega.parse(spec), { renderer: "canvas", container: "#view", hover: false });
   await view.runAsync();
   await nextFrame();
-  $("initMs").textContent = fmt(performance.now() - t0);
+  firstViewMs = performance.now() - t0;
+  $("initMs").textContent = fmt(firstViewMs);
 
   // Latency of a brush update: from the first evaluation of a new brush position until the next
   // position starts to evaluate or the dataflow is idle (measured to the frame).
@@ -209,7 +210,7 @@ async function main() {
   window.addEventListener("pointerup", () => { if (dragging) { dragging = false; $("gapMs").textContent = fmt(dragMax); } });
 
   $("replay").disabled = false;
-  $("replay").onclick = () => replay(view);
+  $("replay").onclick = async () => { const res = await replay(view); storeRun(res); };
   $("status").textContent = `${rows.toLocaleString()} rows · drag a brush on ${PAGE === "distributions" ? "the departure-time histogram" : "any histogram"}`;
   $("envNote").innerHTML = `Vega ${vega.version} · ${navigator.hardwareConcurrency || "?"} logical cores · ` +
     (crossOriginIsolated ? "cross-origin isolated" : `not isolated (${window.pwIsolation || "no headers"})`) +
@@ -218,17 +219,24 @@ async function main() {
     (active && threads > cores ? `<br><span class="warn">More workers than cores (${cores}): the extra workers share cores.</span>` : "") +
     "<br>Numbers depend on the machine; the paper's were measured on a 16-core laptop.";
   window.pwView = view; // for the console
+  envInfo = { cores: navigator.hardwareConcurrency || null, vega: vega.version, isolated: crossOriginIsolated, gpu: !!(handle && handle.gpu) };
+  benchStep(view);
 }
 
+let replayLat = null; // latencies of the brush positions of the running replay
 function record(ms) {
+  if (replayLat) replayLat.push(ms);
   lat.push(ms); if (lat.length > 20) lat.shift();
   $("lastMs").textContent = fmt(ms);
   const s = [...lat].sort((a, b) => a - b);
   $("medMs").textContent = fmt(s[s.length >> 1]);
 }
 
-// A one-second drag of the departure-time brush at 60 Hz, as in the paper's benchmark: the brush
-// is set every 16 ms without waiting for results, then we wait until the last update is drawn.
+// A one-second drag at 60 Hz, as in the paper's benchmark: the brush is set every 16 ms
+// without waiting for results, then we wait until the last update is drawn. The brush
+// position is a function of the time since the start of the drag, from a fixed start to a
+// fixed end, so that every configuration selects the same rows at the end (and passes the
+// same positions in between), however many updates it manages.
 // The pixel signal of a Vega-Lite brush lives in the scope of its view, not at the top level.
 function findSignal(ctx, name) {
   if (ctx.signals && ctx.signals[name]) return ctx.signals[name];
@@ -236,31 +244,193 @@ function findSignal(ctx, name) {
   return null;
 }
 let brushX = null;
+function setBrush(view, u) { // u from 0 (start) to 1 (end)
+  if (PAGE === "distributions") { const a = 60 + 480 * u; view.update(brushX, [a, a + 160]); }
+  else { const a = 10 + 180 * u; view.signal("time_px", [a, a + 60]); }
+}
+async function idle(view) { // until no evaluation runs for two frames
+  for (let quiet = 0; quiet < 2;) { await nextFrame(); quiet = view._running ? 0 : quiet + 1; if (view._running) await view._running; }
+}
 async function replay(view) {
   if (PAGE === "distributions" && !brushX) brushX = findSignal(view._runtime, "b_x");
   $("replay").disabled = true;
   $("status").textContent = "replaying a one-second drag…";
-  await nextFrame();
-  dragging = true; dragMax = 0; startLagWatch();
+  // The same start for every run: the other brushes cleared, this one at its start position.
+  if (PAGE === "crossfilter") { view.signal("distance_px", null); view.signal("delay_px", null); }
+  setBrush(view, 0);
+  await view.runAsync();
+  await idle(view);
+  dragging = true; dragMax = 0; startLagWatch(); replayLat = [];
   const t0 = performance.now();
   let k = 0;
   await new Promise(resolve => {
     const id = setInterval(() => {
+      const u = Math.min(1, (performance.now() - t0) / 1000);
       noteInput(performance.now());
-      if (PAGE === "distributions") { const a = 60 + (k++ * 6) % 480; view.update(brushX, [a, a + 160]); }
-      else { const a = 10 + (k++ * 3) % 190; view.signal("time_px", [a, a + 60]); }
+      setBrush(view, u);
+      k++;
       view.runAsync();
-      if (performance.now() - t0 >= 1000) { clearInterval(id); resolve(); }
+      if (u >= 1) { clearInterval(id); resolve(); }
     }, 16);
   });
   const tEnd = performance.now();
   await view.runAsync();
-  await nextFrame();
+  await idle(view);
+  const settleMs = performance.now() - tEnd;
   dragging = false;
+  // The largest lag is final once the lag meter is back to zero.
+  for (let w = 0; lagWatch && w < 600; w++) await nextFrame();
+  const sorted = [...replayLat].sort((a, b) => a - b);
+  replayLat = null;
+  const res = {
+    positions: k, updates: sorted.length,
+    medianMs: sorted.length ? sorted[sorted.length >> 1] : null,
+    maxLagMs: lagMax, maxGapMs: dragMax, settleMs,
+  };
   $("gapMs").textContent = fmt(dragMax);
-  $("settleMs").textContent = fmt(performance.now() - tEnd);
+  $("settleMs").textContent = fmt(res.settleMs);
   $("status").textContent = `${rows.toLocaleString()} rows · ${k} brush positions in one second`;
   $("replay").disabled = false;
+  return res;
 }
 
-main().catch(e => { $("status").innerHTML = `<span class="warn">${String(e && e.message || e)}</span>`; console.error(e); });
+// ---- runs: every replay is stored in this browser (localStorage), to compare configurations
+const RUNS_KEY = "paravega-showcase-runs", BENCH_KEY = "paravega-showcase-bench";
+const load = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } };
+const save = (k, v) => { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const pageName = { crossfilter: "Crossfilter", distributions: "Distributions" };
+const engineLabel = () => ENGINES[engine] + (engine === "gpu" && PAGE === "distributions" ? (gpuMode === "approx" ? " (approx.)" : " (exact)") : "");
+const workersLabel = () => engine === "stock" ? "–" : mainThread ? "none" : String(threads);
+let firstViewMs = null, envInfo = {};
+function storeRun(res, batch) {
+  const runs = load(RUNS_KEY, []);
+  runs.push({
+    when: new Date().toISOString(), batch: batch || null, page: PAGE, engine: engineLabel(), workers: workersLabel(),
+    rows, firstViewMs, ...res, ...envInfo,
+  });
+  save(RUNS_KEY, runs.slice(-500));
+  renderRuns();
+}
+const cell = v => v === null || v === undefined ? "–" : typeof v === "number" ? fmt(v) : String(v);
+function renderRuns() {
+  const runs = load(RUNS_KEY, []);
+  const body = $("runsBody");
+  if (!body) return;
+  body.innerHTML = runs.length ? "" : `<tr><td colspan="11" class="note">No runs yet: press "Replay a one-second drag", or benchmark all configurations.</td></tr>`;
+  for (const r of [...runs].reverse()) {
+    const tr = document.createElement("tr");
+    const cur = r.page === PAGE && r.engine === engineLabel() && r.workers === workersLabel() && r.rows === rows;
+    if (cur) tr.className = "cur";
+    const vals = [new Date(r.when).toLocaleTimeString(), pageName[r.page] || r.page, r.engine, r.workers, Number(r.rows).toLocaleString(),
+      r.error ? r.error : r.positions, cell(r.medianMs), cell(r.maxLagMs), cell(r.maxGapMs), cell(r.settleMs), cell(r.firstViewMs)];
+    vals.forEach((v, i) => { const td = document.createElement("td"); td.textContent = v; if (i >= 4) td.className = "num"; tr.appendChild(td); });
+    body.appendChild(tr);
+  }
+}
+function downloadRuns() {
+  const runs = load(RUNS_KEY, []);
+  const cols = ["when", "batch", "page", "engine", "workers", "rows", "positions", "updates", "medianMs", "maxLagMs", "maxGapMs", "settleMs", "firstViewMs", "error", "cores", "vega", "isolated", "gpu"];
+  const csv = [cols.join(",")].concat(runs.map(r => cols.map(c => r[c] === undefined || r[c] === null ? "" : JSON.stringify(r[c])).join(","))).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = "paravega-showcase-runs.csv";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// ---- benchmark: the replay for every configuration, one fresh page per configuration
+const SIZES = [...$("rows").options].map(o => Number(o.value));
+const STOCK_MAX_ROWS = 1000000; // stock Vega above 1M rows takes minutes to load (paper, Section 6.1)
+function benchConfigs(sizes) {
+  const out = [];
+  for (const n of sizes) {
+    if (n <= STOCK_MAX_ROWS) out.push({ engine: "stock", rows: n });
+    for (const t of ["0", "1", "2", "4", "8", "16"]) out.push({ engine: "paravega", threads: t, rows: n });
+    if (PAGE === "crossfilter") { out.push({ engine: "index", threads: "16", rows: n }); out.push({ engine: "gpu", threads: "16", rows: n }); }
+    else { out.push({ engine: "gpu", threads: "16", gpumode: "exact", rows: n }); out.push({ engine: "gpu", threads: "16", gpumode: "approx", rows: n }); }
+  }
+  return out;
+}
+function gotoConfig(c) {
+  const u = new URLSearchParams();
+  u.set("engine", c.engine); u.set("rows", String(c.rows));
+  if (c.threads) u.set("threads", c.threads);
+  if (c.gpumode) u.set("gpumode", c.gpumode);
+  location.search = u.toString();
+}
+function startBench() {
+  const sizes = $("benchSizes").value === "all" ? SIZES : [rows];
+  const configs = benchConfigs(sizes);
+  const batch = new Date().toISOString().slice(0, 19);
+  save(BENCH_KEY, { page: PAGE, batch, configs, i: 0 });
+  gotoConfig(configs[0]);
+}
+function stopBench() { save(BENCH_KEY, null); $("benchStatus").textContent = "benchmark stopped"; $("benchStop").disabled = true; $("benchRun").disabled = false; }
+async function benchStep(view) {
+  const plan = load(BENCH_KEY, null);
+  if (!plan || plan.page !== PAGE) return;
+  $("benchStatus").textContent = `benchmark ${plan.batch}: configuration ${plan.i + 1} of ${plan.configs.length} (warm-up, then measured)`;
+  $("benchStop").disabled = false; $("benchRun").disabled = true;
+  try {
+    await replay(view);                 // warm-up (index builds, compiled kernels)
+    const res = await replay(view);
+    if (!load(BENCH_KEY, null)) return; // stopped meanwhile
+    storeRun(res, plan.batch);
+  } catch (e) { storeRun({ error: String(e && e.message || e) }, plan.batch); }
+  advanceBench(plan);
+}
+function advanceBench(plan) {
+  plan.i++;
+  if (plan.i >= plan.configs.length) {
+    save(BENCH_KEY, null);
+    $("benchStatus").textContent = `benchmark ${plan.batch} done: ${plan.configs.length} configurations`;
+    $("benchStop").disabled = true; $("benchRun").disabled = false;
+    return;
+  }
+  save(BENCH_KEY, plan);
+  gotoConfig(plan.configs[plan.i]);
+}
+function setupRuns() {
+  const css = document.createElement("style");
+  css.textContent = `#runs { padding: 0 20px 24px; } #runs table { border-collapse: collapse; width: 100%; font-size: 13px; }
+#runs th, #runs td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+#runs th { color: var(--muted); font-weight: 600; } #runs td.num, #runs th.num { text-align: right; font-variant-numeric: tabular-nums; }
+#runs tr.cur td { background: var(--panel); } #runs .tools { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin: 8px 0 10px; }
+#runs .scroll { overflow-x: auto; max-height: 420px; overflow-y: auto; }`;
+  document.head.appendChild(css);
+  const sec = document.createElement("section");
+  sec.id = "runs";
+  sec.innerHTML = `<div class="card"><h2>Your runs (stored in this browser)</h2>
+<div class="tools">
+  <label>Benchmark <select id="benchSizes"><option value="this">this size</option><option value="all">all sizes</option></select></label>
+  <button class="action" id="benchRun">Run all configurations</button>
+  <button id="benchStop" disabled>Stop</button>
+  <span id="benchStatus" class="note" style="margin:0"></span>
+  <span style="flex:1"></span>
+  <button id="runsCsv">Download CSV</button> <button id="runsClear">Clear runs</button>
+</div>
+<div class="note" style="margin:0 0 8px">Every replay is stored here. The benchmark loads every configuration in a fresh page (stock Vega, ParaVega with no workers and 1 to 16 workers, ${PAGE === "crossfilter" ? "the index, WebGPU" : "WebGPU exact and approximate"}), replays the drag once to warm up and once to measure. Stock Vega is skipped above 1M rows.</div>
+<div class="scroll"><table><thead><tr><th>Time</th><th>Page</th><th>Engine</th><th>Workers</th><th class="num">Rows</th><th class="num">Positions</th><th class="num">Median update</th><th class="num">Largest lag</th><th class="num">Largest frame gap</th><th class="num">After the drag</th><th class="num">First view</th></tr></thead><tbody id="runsBody"></tbody></table></div></div>`;
+  document.body.appendChild(sec);
+  $("benchRun").onclick = startBench;
+  $("benchStop").onclick = stopBench;
+  $("runsCsv").onclick = downloadRuns;
+  $("runsClear").onclick = () => { if (confirm("Clear all stored runs?")) { save(RUNS_KEY, []); renderRuns(); } };
+  const plan = load(BENCH_KEY, null);
+  if (plan && plan.page === PAGE) {
+    $("benchStop").disabled = false; $("benchRun").disabled = true;
+    $("benchStatus").textContent = `benchmark ${plan.batch}: loading configuration ${plan.i + 1} of ${plan.configs.length}`;
+    // A configuration that does not finish in 5 minutes is recorded as a timeout.
+    const i = plan.i;
+    setTimeout(() => { const p = load(BENCH_KEY, null); if (p && p.batch === plan.batch && p.i === i) { storeRun({ error: "timeout" }, p.batch); advanceBench(p); } }, 300000);
+  }
+  renderRuns();
+}
+setupRuns();
+
+main().catch(e => {
+  $("status").innerHTML = `<span class="warn">${String(e && e.message || e)}</span>`; console.error(e);
+  // In a benchmark, record the failure and go on with the next configuration.
+  const plan = load(BENCH_KEY, null);
+  if (plan && plan.page === PAGE) { storeRun({ error: String(e && e.message || e) }, plan.batch); advanceBench(plan); }
+});
