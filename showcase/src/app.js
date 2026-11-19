@@ -1,7 +1,7 @@
 // ParaVega showcase: the three-view crossfilter dashboard of the paper (Vega
 // specification from demo/crossfilterSpec.js, unchanged), on stock Vega or on
 // ParaVega, with a live view of the page's responsiveness.
-import { registerParaweb } from "./paraweb-vega.mjs";
+import { registerParaweb, inlineWorkerFactory } from "./paraweb-vega.mjs";
 import { crossfilterSpec, FIELDS } from "./crossfilterSpec.js";
 import { makeDistRows, distVegaLite } from "./distSpec.js";
 
@@ -18,7 +18,11 @@ const rows = Number(q.get("rows")) || 1000000;
 const cores = navigator.hardwareConcurrency || 4;
 // Workers: 1, 2, 4, 8, 16, or all cores (default).
 const threadsParam = q.get("threads") || "auto";
-const threads = threadsParam === "auto" ? cores : Math.max(1, Number(threadsParam) || cores);
+// "0": ParaVega's kernels and columns, but computed on the main thread (no workers), as the
+// Main column of the paper's Table 5; it separates the effect of the workers from that of the layout.
+const mainThread = threadsParam === "0";
+const threads = mainThread ? 1 : threadsParam === "auto" ? cores : Math.max(1, Number(threadsParam) || cores);
+const workersText = mainThread ? "the main thread (no workers)" : `${threads} worker${threads > 1 ? "s" : ""}`;
 const BINS = { distance: { extent: [0, 4000], maxbins: 40 }, delay: { extent: [-60, 180], maxbins: 40 }, time: { extent: [0, 24], maxbins: 24 } };
 
 // ---- controls (every change reloads the page, so each engine starts clean)
@@ -30,17 +34,21 @@ for (const b of $("engines").querySelectorAll("button")) {
 $("rows").value = String(rows);
 if (!$("rows").value) { $("rows").value = "1000000"; }
 $("rows").onchange = () => go({ rows: $("rows").value });
-$("threads").value = ["1", "2", "4", "8", "16"].includes(threadsParam) ? threadsParam : "auto";
+$("threads").value = ["0", "1", "2", "4", "8", "16"].includes(threadsParam) ? threadsParam : "auto";
 $("threads").disabled = engine === "stock";
 $("threads").onchange = () => go({ threads: $("threads").value });
 $("engineName").textContent = ENGINES[engine];
 $("engineName").className = "engine " + (engine === "stock" ? "stock" : "pv");
 $("engineNote").textContent = PAGE === "distributions" ? {
   stock: "Vega filters the rows, estimates the densities and sorts the delays for the quartiles tuple by tuple on the main thread.",
-  paravega: `The same operators in parallel: the densities as MapReduce in rounds and the quartiles with a parallel sort, on ${threads} worker${threads > 1 ? "s" : ""}.`,
+  paravega: mainThread
+    ? "ParaVega's operators over shared columns, but computed on the main thread without workers: faster than stock Vega, yet the page still stops while it computes."
+    : `The same operators in parallel: the densities as MapReduce in rounds and the quartiles with a parallel sort, on ${workersText}.`,
 }[engine] : {
   stock: "Vega evaluates the filters, bins and counts tuple by tuple on the main thread.",
-  paravega: "The same operators, evaluated as fused kernels over shared columns on all cores.",
+  paravega: mainThread
+    ? "The same operators as fused kernels over shared columns, but on the main thread without workers, so the page stops while they compute."
+    : `The same operators, evaluated as fused kernels over shared columns on ${workersText}.`,
   index: "ParaVega with its exact pre-aggregation index: after the first move of a brush, a move costs a lookup and two edge scans.",
   gpu: "ParaVega with its WebGPU backend: the counts of the three views run as compute shaders over columns kept in GPU buffers.",
 }[engine];
@@ -145,7 +153,7 @@ async function main() {
     spec.data.find(d => d.name === "src").values = makeTuples(rows);
   }
   let handle = null;
-  if (engine !== "stock") handle = registerParaweb(vega, { threads, preaggregate: engine === "index", gpu: engine === "gpu" });
+  if (engine !== "stock") handle = registerParaweb(vega, { threads, ...(mainThread ? { workerFactory: inlineWorkerFactory() } : {}), preaggregate: engine === "index", gpu: engine === "gpu" });
   if (handle && engine === "gpu") {
     await handle.ready;
     if (!handle.gpu) $("engineNote").innerHTML = '<span class="warn">WebGPU is not available in this browser, so the counts run on the workers.</span>';
@@ -194,7 +202,7 @@ async function main() {
   $("status").textContent = `${rows.toLocaleString()} rows · drag a brush on ${PAGE === "distributions" ? "the departure-time histogram" : "any histogram"}`;
   $("envNote").innerHTML = `Vega ${vega.version} · ${navigator.hardwareConcurrency || "?"} logical cores · ` +
     (crossOriginIsolated ? "cross-origin isolated" : `not isolated (${window.pwIsolation || "no headers"})`) +
-    (active ? ` · ParaVega active on ${threads} worker${threads > 1 ? "s" : ""}` : "") +
+    (active ? ` · ParaVega active on ${workersText}` : "") +
     (handle && engine === "gpu" ? (handle.gpu ? " · WebGPU active" : " · no WebGPU") : "") +
     (active && threads > cores ? `<br><span class="warn">More workers than cores (${cores}): the extra workers share cores.</span>` : "") +
     "<br>Numbers depend on the machine; the paper's were measured on a 16-core laptop.";
