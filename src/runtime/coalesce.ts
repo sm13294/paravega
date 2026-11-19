@@ -13,14 +13,16 @@
  * This patch keeps only the newest pending move of each type, as the browser
  * does for a busy page: a queued move evaluation is skipped (its event is not
  * delivered, so the evaluation has nothing to do) when a newer move of the
- * same type is queued after it. Moves are never merged across other queued
- * evaluations, such as a pointerup or a click, so the order of events and
- * the last position before a release are kept.
+ * same type is queued after it. Moves are never merged across other input
+ * events, such as a pointerup or a click, so the order of events and the
+ * last position before a release are kept. Evaluations that ParaVega or Vega
+ * queue themselves (results from the workers, timers, nested runs) are not
+ * input, so moves are merged across them.
  */
 
 const MOVES = new Set(["pointermove", "mousemove", "touchmove"]);
 
-interface Entry { type: string | null; event: any; skip: boolean }
+interface Entry { type: string | null; event: any; barrier: boolean; skip: boolean }
 
 export function installMoveCoalescing(vega: any): () => void {
   const proto = vega.Dataflow && vega.Dataflow.prototype;
@@ -33,12 +35,14 @@ export function installMoveCoalescing(vega: any): () => void {
     const ev = typeof window !== "undefined" ? (window as any).event : undefined;
     const type = prerun && ev && MOVES.has(ev.type) ? ev.type : null;
     const queue: Entry[] = this._pwQueue || (this._pwQueue = []);
-    const entry: Entry = { type, event: ev, skip: false };
+    // An input event other than a move keeps the moves before it.
+    const barrier = !type && !!ev && typeof ev.type === "string" && !MOVES.has(ev.type);
+    const entry: Entry = { type, event: ev, barrier, skip: false };
     if (type) {
-      // Skip older queued moves of the same type, back to the last other evaluation.
+      // Skip older queued moves of the same type, back to the last other input event.
       for (let i = queue.length - 1; i >= 0; --i) {
         const e = queue[i];
-        if (e.type === null) break;
+        if (e.barrier) break;
         if (e.type === type && e.event !== ev) e.skip = true;
       }
     }

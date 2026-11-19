@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ParaVega: distributions with and without ParaVega</title>
+<script src="isolate.js"></script>
+<style>
+  :root { --ink: #1d232b; --muted: #5d6673; --line: #d9dde3; --bg: #ffffff; --panel: #f5f6f8; --good: #1f7a4d; --bad: #b3261e; --accent: #2f6db5; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }
+  header { padding: 16px 20px 8px; border-bottom: 1px solid var(--line); }
+  h1 { font-size: 19px; margin: 0 0 4px; }
+  nav.pages { display: flex; gap: 6px; margin: 0 0 10px; } nav.pages a { padding: 5px 11px; border-radius: 8px; border: 1px solid var(--line); color: var(--ink); text-decoration: none; font-size: 13px; } nav.pages a[aria-current] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  header p { margin: 0; color: var(--muted); max-width: 980px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; padding: 12px 20px; background: var(--panel); border-bottom: 1px solid var(--line); }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+  .seg button { border: 0; background: none; padding: 7px 12px; font: inherit; cursor: pointer; color: var(--ink); }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .bar label { color: var(--muted); }
+  select, .action { font: inherit; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
+  .action { background: var(--accent); color: #fff; border-color: var(--accent); cursor: pointer; }
+  .action:disabled { opacity: .5; cursor: default; }
+  main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 18px; padding: 16px 20px; align-items: start; }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+  #view { overflow-x: auto; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: #fff; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 8px; }
+  .engine { font-size: 22px; font-weight: 650; }
+  .engine.stock { color: var(--bad); } .engine.pv { color: var(--good); }
+  #beat { position: relative; height: 28px; border-radius: 14px; background: var(--panel); overflow: hidden; margin: 6px 0 4px; }
+  #dot { position: absolute; top: 4px; left: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); }
+  #lagbar { position: relative; height: 28px; border-radius: 14px; background: var(--panel); overflow: hidden; margin: 6px 0 4px; }
+  #lagfill { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: var(--good); }
+  #lagMs { position: absolute; right: 12px; top: 0; line-height: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  #gaps { width: 100%; height: 90px; display: block; }
+  dl { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 8px 0 0; }
+  dt { color: var(--muted); } dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .note { color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+  #status { color: var(--muted); }
+  .warn { color: var(--bad); }
+</style>
+</head>
+<body>
+<header>
+  <nav class="pages" aria-label="Case studies">
+    <a href="./">Crossfilter (one pass per move)</a>
+    <a href="distributions.html" aria-current="page">Distributions (density and quartiles)</a>
+  </nav>
+  <h1>Distributions of a selection, with and without ParaVega</h1>
+  <p>A histogram of departure times over synthetic flights-like rows: dragging a brush on it re-estimates the density of the arrival delay per carrier and recomputes its quartiles, over all selected rows. The Vega-Lite specification is the same in every mode; ParaVega only replaces the operators that evaluate it. Here each brush move is heavy, so the number of workers matters: compare 1 worker with all cores. Watch the moving dot, which stops whenever the page cannot draw, and the bar below it, which shows how far the views are behind the brush.</p>
+</header>
+<div class="bar">
+  <div class="seg" id="engines" role="group" aria-label="Engine">
+    <button data-engine="stock">Stock Vega</button>
+    <button data-engine="paravega">ParaVega</button>
+  </div>
+  <label>Workers <select id="threads">
+    <option value="1">1</option><option value="2">2</option><option value="4">4</option>
+    <option value="8">8</option><option value="16">16</option><option value="auto">all cores</option>
+  </select></label>
+  <label>Rows <select id="rows">
+    <option value="100000">100K</option><option value="500000">500K</option><option value="1000000">1M</option>
+    <option value="2000000">2M</option><option value="5000000">5M</option><option value="10000000">10M</option>
+  </select></label>
+  <button class="action" id="replay" disabled>Replay a one-second drag</button>
+  <span id="status">loading…</span>
+</div>
+<main>
+  <div id="view"></div>
+  <aside>
+    <div class="card">
+      <h2>Engine</h2>
+      <div class="engine" id="engineName">–</div>
+      <div class="note" id="engineNote"></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h2>Is the page responding?</h2>
+      <div id="beat"><div id="dot"></div></div>
+      <canvas id="gaps" width="600" height="180" aria-label="Gaps between frames over the last five seconds"></canvas>
+      <div class="note">Gap between animation frames over the last 5 s; the dashed line is one frame (16.7 ms).</div>
+      <dl>
+        <dt>Last brush update</dt><dd id="lastMs">–</dd>
+        <dt>Median of the last 20</dt><dd id="medMs">–</dd>
+        <dt>Largest frame gap, last drag</dt><dd id="gapMs">–</dd>
+        <dt>Updates still queued after the drag</dt><dd id="settleMs">–</dd>
+        <dt>Time to first view</dt><dd id="initMs">–</dd>
+      </dl>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h2>Are the results keeping up?</h2>
+      <div id="lagbar"><div id="lagfill"></div><span id="lagMs">up to date</span></div>
+      <div class="note">How far the views are behind the brush: the age of the oldest brush position they do not show yet (log scale, 10 ms to 10 s).</div>
+      <dl>
+        <dt>Largest, last drag</dt><dd id="lagMax">–</dd>
+      </dl>
+    </div>
+    <div class="card note" style="margin-top:12px" id="envNote"></div>
+  </aside>
+</main>
+<script src="vega.min.js"></script>
+<script src="vega-lite.min.js"></script>
+<script>window.SHOWCASE_PAGE = "distributions";</script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

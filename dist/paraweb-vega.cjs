@@ -3180,7 +3180,7 @@ async function finishPreagg(pool, params2, field2, R, plan, final, bidx, t03) {
   const A = plan.A;
   const nm = plan.spec.measures.length, variance = plan.spec.variance;
   const size = Kv * 2 * R * A;
-  if (size < TREE_MAIN_VALUES || pool.size < 2) {
+  if (size < TREE_MAIN_VALUES) {
     const tree2 = new Float64Array(size);
     initRegion(tree2, 0, Kv * 2 * R, nm);
     const missing2 = new Float64Array(Kv * A);
@@ -5632,7 +5632,7 @@ async function sortRows(pool, rows, keys) {
   const cols = keys.map((k) => k.key);
   keys.forEach((k) => pool.ensureColumn(k.key, "f64", k.view.buffer));
   const T = Math.min(pool.size, Math.max(1, Math.floor(m / 4096)));
-  if (m < MAIN_THREAD_SORT || T < 2) {
+  if (m < MAIN_THREAD_SORT) {
     const cmp = new Function(...keys.map((_k, i) => `K${i}`), `${cmpSrc}; return cmp;`)(...keys.map((k) => k.view));
     out.set(rows);
     out.subarray(0, m).sort(cmp);
@@ -7864,11 +7864,12 @@ function installMoveCoalescing(vega) {
     const ev = typeof window !== "undefined" ? window.event : void 0;
     const type = prerun && ev && MOVES.has(ev.type) ? ev.type : null;
     const queue = this._pwQueue || (this._pwQueue = []);
-    const entry = { type, event: ev, skip: false };
+    const barrier = !type && !!ev && typeof ev.type === "string" && !MOVES.has(ev.type);
+    const entry = { type, event: ev, barrier, skip: false };
     if (type) {
       for (let i = queue.length - 1; i >= 0; --i) {
         const e = queue[i];
-        if (e.type === null) break;
+        if (e.barrier) break;
         if (e.type === type && e.event !== ev) e.skip = true;
       }
     }

@@ -172,7 +172,7 @@ async function finishPreagg(
   // Leaves are nodes R .. 2R - 1 (any R works for the iterative tree; a
   // power of two makes node 1 the root over all buckets).
   const size = Kv * 2 * R * A;
-  if (size < TREE_MAIN_VALUES || pool.size < 2) {
+  if (size < TREE_MAIN_VALUES) { // small trees on the main thread; larger ones in the workers, even with one
     const tree = new Float64Array(size);
     initRegion(tree, 0, Kv * 2 * R, nm);
     const missing = new Float64Array(Kv * A);

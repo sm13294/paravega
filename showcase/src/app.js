@@ -3,10 +3,16 @@
 // ParaVega, with a live view of the page's responsiveness.
 import { registerParaweb } from "./paraweb-vega.mjs";
 import { crossfilterSpec, FIELDS } from "./crossfilterSpec.js";
+import { makeDistRows, distVegaLite } from "./distSpec.js";
+
+// Two pages share this script: the crossfilter dashboard of the paper (index.html) and the
+// distribution explorer (distributions.html), which sets window.SHOWCASE_PAGE.
+const PAGE = window.SHOWCASE_PAGE === "distributions" ? "distributions" : "crossfilter";
 
 const $ = id => document.getElementById(id);
 const q = new URLSearchParams(location.search);
 const ENGINES = { stock: "Stock Vega", paravega: "ParaVega", index: "ParaVega + index", gpu: "ParaVega + WebGPU" };
+if (PAGE === "distributions") { delete ENGINES.index; delete ENGINES.gpu; } // counts only
 const engine = ENGINES[q.get("engine")] ? q.get("engine") : "stock";
 const rows = Number(q.get("rows")) || 1000000;
 const cores = navigator.hardwareConcurrency || 4;
@@ -29,7 +35,10 @@ $("threads").disabled = engine === "stock";
 $("threads").onchange = () => go({ threads: $("threads").value });
 $("engineName").textContent = ENGINES[engine];
 $("engineName").className = "engine " + (engine === "stock" ? "stock" : "pv");
-$("engineNote").textContent = {
+$("engineNote").textContent = PAGE === "distributions" ? {
+  stock: "Vega filters the rows, estimates the densities and sorts the delays for the quartiles tuple by tuple on the main thread.",
+  paravega: `The same operators in parallel: the densities as MapReduce in rounds and the quartiles with a parallel sort, on ${threads} worker${threads > 1 ? "s" : ""}.`,
+}[engine] : {
   stock: "Vega evaluates the filters, bins and counts tuple by tuple on the main thread.",
   paravega: "The same operators, evaluated as fused kernels over shared columns on all cores.",
   index: "ParaVega with its exact pre-aggregation index: after the first move of a brush, a move costs a lookup and two edge scans.",
@@ -127,9 +136,14 @@ const lat = [];
 async function main() {
   $("status").textContent = `generating ${rows.toLocaleString()} rows…`;
   await nextFrame();
-  const tuples = makeTuples(rows);
-  const spec = crossfilterSpec("stock", BINS, FIELDS);
-  spec.data.find(d => d.name === "src").values = tuples;
+  let spec;
+  if (PAGE === "distributions") {
+    spec = vegaLite.compile(distVegaLite()).spec;
+    spec.data.find(d => d.name === "flights").values = makeDistRows(rows);
+  } else {
+    spec = crossfilterSpec("stock", BINS, FIELDS);
+    spec.data.find(d => d.name === "src").values = makeTuples(rows);
+  }
   let handle = null;
   if (engine !== "stock") handle = registerParaweb(vega, { threads, preaggregate: engine === "index", gpu: engine === "gpu" });
   if (handle && engine === "gpu") {
@@ -150,7 +164,8 @@ async function main() {
 
   // Latency of a brush update: from the first evaluation of a new brush position until the next
   // position starts to evaluate or the dataflow is idle (measured to the frame).
-  const brushSignals = FIELDS.map(f => `${f}_px`);
+  // The distribution explorer's brush is a Vega-Lite selection: its value is the top-level signal b.
+  const brushSignals = PAGE === "distributions" ? ["b"] : FIELDS.map(f => `${f}_px`);
   let prev = brushSignals.map(s => JSON.stringify(view.signal(s)));
   let lastChangeStart = -Infinity;
   lagView = view;
@@ -176,7 +191,7 @@ async function main() {
 
   $("replay").disabled = false;
   $("replay").onclick = () => replay(view);
-  $("status").textContent = `${rows.toLocaleString()} rows · drag a brush on any histogram`;
+  $("status").textContent = `${rows.toLocaleString()} rows · drag a brush on ${PAGE === "distributions" ? "the departure-time histogram" : "any histogram"}`;
   $("envNote").innerHTML = `Vega ${vega.version} · ${navigator.hardwareConcurrency || "?"} logical cores · ` +
     (crossOriginIsolated ? "cross-origin isolated" : `not isolated (${window.pwIsolation || "no headers"})`) +
     (active ? ` · ParaVega active on ${threads} worker${threads > 1 ? "s" : ""}` : "") +
@@ -195,7 +210,15 @@ function record(ms) {
 
 // A one-second drag of the departure-time brush at 60 Hz, as in the paper's benchmark: the brush
 // is set every 16 ms without waiting for results, then we wait until the last update is drawn.
+// The pixel signal of a Vega-Lite brush lives in the scope of its view, not at the top level.
+function findSignal(ctx, name) {
+  if (ctx.signals && ctx.signals[name]) return ctx.signals[name];
+  for (const sub of ctx.subcontext || []) { const s = findSignal(sub, name); if (s) return s; }
+  return null;
+}
+let brushX = null;
 async function replay(view) {
+  if (PAGE === "distributions" && !brushX) brushX = findSignal(view._runtime, "b_x");
   $("replay").disabled = true;
   $("status").textContent = "replaying a one-second drag…";
   await nextFrame();
@@ -204,9 +227,9 @@ async function replay(view) {
   let k = 0;
   await new Promise(resolve => {
     const id = setInterval(() => {
-      const a = 10 + (k++ * 3) % 190;
       noteInput(performance.now());
-      view.signal("time_px", [a, a + 60]);
+      if (PAGE === "distributions") { const a = 60 + (k++ * 6) % 480; view.update(brushX, [a, a + 160]); }
+      else { const a = 10 + (k++ * 3) % 190; view.signal("time_px", [a, a + 60]); }
       view.runAsync();
       if (performance.now() - t0 >= 1000) { clearInterval(id); resolve(); }
     }, 16);

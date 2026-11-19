@@ -19,6 +19,8 @@ for (const f of fs.readdirSync(path.join(here, "src"))) copy(path.join(here, "sr
 copy(path.join(root, "demo/crossfilterSpec.js"));
 copy(path.join(root, "dist/paraweb-vega.mjs"));
 copy(path.join(root, "node_modules/vega/build/vega.min.js"));
+copy(path.join(root, "node_modules/vega-lite/build/vega-lite.min.js"));
+copy(path.join(root, "node_modules/vega-lite/LICENSE"), "LICENSE-vega-lite.txt");
 copy(path.join(root, "node_modules/vega/LICENSE"), "LICENSE-vega.txt");
 fs.writeFileSync(path.join(site, ".nojekyll"), "");
 console.log("showcase site in " + path.relative(root, site) + ": " + fs.readdirSync(site).join(", "));

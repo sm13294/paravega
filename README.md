@@ -10,9 +10,13 @@ Divide and Conquer, Farm), keeps the data resident in shared memory between
 interactions, and draws large symbol marks in Web Workers. Moving brushes can
 be answered from an exact pre-aggregation index.
 
-**Live demo:** <https://sm13294.github.io/paravega/>. The same crossfilter
-dashboard on stock Vega and on ParaVega, with a live view of how long the page
-stops responding.
+**Live demo:** <https://sm13294.github.io/paravega/>. Two case studies, each on
+stock Vega and on ParaVega with 1 to 16 workers, with a live view of whether the
+page responds and how far the views are behind the brush:
+the crossfilter dashboard (one pass over the rows per brush move), and a
+[distribution explorer](https://sm13294.github.io/paravega/distributions.html)
+(density estimates and quartiles per carrier, where every move re-estimates and
+re-sorts the selected rows, so the number of workers is easy to see).
 
 On ten unchanged Vega and Vega-Lite specifications with one million rows,
 ParaVega reduces the latency of an interaction in Chrome by a factor of 7.9 to

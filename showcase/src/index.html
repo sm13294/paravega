@@ -12,6 +12,7 @@
   body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: var(--bg); }
   header { padding: 16px 20px 8px; border-bottom: 1px solid var(--line); }
   h1 { font-size: 19px; margin: 0 0 4px; }
+  nav.pages { display: flex; gap: 6px; margin: 0 0 10px; } nav.pages a { padding: 5px 11px; border-radius: 8px; border: 1px solid var(--line); color: var(--ink); text-decoration: none; font-size: 13px; } nav.pages a[aria-current] { background: var(--ink); color: #fff; border-color: var(--ink); }
   header p { margin: 0; color: var(--muted); max-width: 980px; }
   .bar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; padding: 12px 20px; background: var(--panel); border-bottom: 1px solid var(--line); }
   .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
@@ -44,6 +45,10 @@
 </head>
 <body>
 <header>
+  <nav class="pages" aria-label="Case studies">
+    <a href="./" aria-current="page">Crossfilter (one pass per move)</a>
+    <a href="distributions.html">Distributions (density and quartiles)</a>
+  </nav>
   <h1>The same Vega dashboard, with and without ParaVega</h1>
   <p>Three linked histograms over synthetic flights-like rows: dragging a brush on one histogram filters the other two. The Vega specification is the same in every mode; ParaVega only replaces the operators that evaluate it. Drag a brush, or replay a one-second drag, and watch the moving dot, which stops whenever the page cannot draw, and the bar below it, which shows how far the histograms are behind the brush.</p>
 </header>

@@ -50,7 +50,9 @@ export async function sortRows(pool: WorkerPool, rows: Int32Array, keys: SortKey
   const cols = keys.map(k => k.key);
   keys.forEach(k => pool.ensureColumn(k.key, "f64", k.view.buffer as SharedArrayBuffer));
   const T = Math.min(pool.size, Math.max(1, Math.floor(m / 4096)));
-  if (m < MAIN_THREAD_SORT || T < 2) {
+  // With one worker the general path below sorts one bucket in that worker, so that the main
+  // thread stays free; only small inputs are sorted here.
+  if (m < MAIN_THREAD_SORT) {
     const cmp = new Function(...keys.map((_k, i) => `K${i}`), `${cmpSrc}; return cmp;`)(...keys.map(k => k.view));
     out.set(rows);
     out.subarray(0, m).sort(cmp);
