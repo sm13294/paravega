@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "A parallel runtime for Vega: unchanged Vega and Vega-Lite specifications run on all cores of the browser, built on ParaWeb's parallel programming patterns.",
   "license": "MIT",
-  "author": "Suejb Memeti",
   "repository": {
     "type": "git",
     "url": "https://github.com/sm13294/paravega.git"

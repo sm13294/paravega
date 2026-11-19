@@ -101,5 +101,5 @@ with `node bench/convert-flights.mjs <flights-10m.parquet> data/flights`.
 
 ## License
 
-[MIT](LICENSE) © Suejb Memeti. Vega's browser build in the showcase is
+[MIT](LICENSE). Vega's browser build in the showcase is
 distributed under its own BSD-3-Clause license (`LICENSE-vega.txt`).
