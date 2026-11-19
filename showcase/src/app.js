@@ -317,20 +317,76 @@ function storeRun(res, batch) {
 // Results in milliseconds (the unit is in the column header): plain numbers, easy to compare.
 const ms = v => v === null || v === undefined ? "–" : v >= 100 ? Math.round(v).toLocaleString("en") : v >= 10 ? v.toFixed(1) : v.toFixed(2);
 const cell = v => typeof v === "number" ? ms(v) : v === null || v === undefined ? "–" : String(v);
+// Runs of this page in the chosen scope (the latest benchmark, or all runs), of the current drag length.
+function scopedRuns() {
+  let runs = load(RUNS_KEY, []).filter(r => r.page === PAGE && (r.dragMs || 1000) === dragMs);
+  if ($("chartScope") && $("chartScope").value === "batch") {
+    const last = [...runs].reverse().find(r => r.batch);
+    if (last) runs = runs.filter(r => r.batch === last.batch); // no benchmark yet: all runs
+  }
+  return runs;
+}
+// Mean and 95% confidence interval (Student's t), as in the paper.
+const T95 = [0, 12.706, 4.303, 3.182, 2.776, 2.571, 2.447, 2.365, 2.306, 2.262, 2.228, 2.201, 2.179, 2.16, 2.145, 2.131, 2.12, 2.11, 2.101, 2.093, 2.086];
+function stats(xs) {
+  xs = xs.filter(x => typeof x === "number" && Number.isFinite(x));
+  const n = xs.length;
+  if (!n) return null;
+  const mean = xs.reduce((a, b) => a + b, 0) / n;
+  const sd = n > 1 ? Math.sqrt(xs.reduce((a, b) => a + (b - mean) ** 2, 0) / (n - 1)) : 0;
+  return { n, mean, sd, ci: n > 1 ? (T95[n - 1] || 1.96) * sd / Math.sqrt(n) : 0 };
+}
+const MEASURES = ["positions", "dragMs", "medianMs", "maxLagMs", "maxGapMs", "settleMs", "firstViewMs"];
+const MEASURE_HEAD = { positions: "Positions", dragMs: "Drag (ms)", medianMs: "Median update (ms)", maxLagMs: "Largest lag (ms)", maxGapMs: "Largest frame gap (ms)", settleMs: "After the drag (ms)", firstViewMs: "First view (ms)" };
+// Runs grouped by configuration and size, with the statistics of every measurement.
+function meansOf(runs) {
+  const groups = new Map();
+  for (const r of runs) {
+    if (r.error) continue;
+    const k = seriesOf(r) + "|" + r.rows;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(r);
+  }
+  const order = SERIES.map(x => x[0]);
+  return [...groups.values()].map(g => {
+    const m = { config: seriesOf(g[0]), page: g[0].page, engine: g[0].engine, workers: g[0].workers, rows: Number(g[0].rows), n: g.length };
+    // The first view is measured once per page load, not per repetition.
+    for (const k of MEASURES) m[k] = stats((k === "firstViewMs" ? g.filter(r => !r.rep || r.rep === 1) : g).map(r => k === "dragMs" ? (r.dragMs || 1000) : r[k]));
+    return m;
+  }).sort((a, b) => a.rows - b.rows || order.indexOf(a.config) - order.indexOf(b.config));
+}
+const pm = st => !st ? "–" : st.n > 1 ? `${ms(st.mean)} ± ${ms(st.ci)}` : ms(st.mean);
 function renderRuns() {
-  const runs = load(RUNS_KEY, []);
-  const body = $("runsBody");
+  const body = $("runsBody"), head = $("runsHead");
   if (!body) return;
-  body.innerHTML = runs.length ? "" : `<tr><td colspan="12" class="note">No runs yet: press "Replay a one-second drag", or benchmark all configurations.</td></tr>`;
-  for (const r of [...runs].reverse()) {
-    const tr = document.createElement("tr");
-    const cur = r.page === PAGE && r.engine === engineLabel() && r.workers === workersLabel() && r.rows === rows;
-    if (cur) tr.className = "cur";
-    if (r.page === PAGE) { tr.dataset.series = seriesOf(r); tr.dataset.rows = String(r.rows); }
-    const vals = [new Date(r.when).toLocaleTimeString(), pageName[r.page] || r.page, r.engine, r.workers, Number(r.rows).toLocaleString(),
-      r.error ? r.error : r.positions, cell(r.dragMs || 1000), cell(r.medianMs), cell(r.maxLagMs), cell(r.maxGapMs), cell(r.settleMs), cell(r.firstViewMs)];
-    vals.forEach((v, i) => { const td = document.createElement("td"); td.textContent = v; if (i >= 4) td.className = "num"; tr.appendChild(td); });
-    body.appendChild(tr);
+  const view = $("tableView") ? $("tableView").value : "means";
+  const runs = scopedRuns();
+  const metricTd = (td, k) => { if (k) td.dataset.metric = k; };
+  if (view === "means") {
+    head.innerHTML = `<tr><th>Engine</th><th>Workers</th><th class="num">Rows</th><th class="num">Runs</th>${MEASURES.map(k => `<th class="num">${MEASURE_HEAD[k]}</th>`).join("")}</tr>`;
+    const means = meansOf(runs);
+    body.innerHTML = means.length ? "" : `<tr><td colspan="11" class="note">No runs yet in this scope: press "Replay the drag", or benchmark all configurations.</td></tr>`;
+    for (const m of means) {
+      const tr = document.createElement("tr");
+      if (m.engine === engineLabel() && m.workers === workersLabel() && m.rows === rows) tr.className = "cur";
+      tr.dataset.series = m.config; tr.dataset.rows = String(m.rows);
+      const cells = [[m.engine], [m.workers], [Number(m.rows).toLocaleString(), "num"], [String(m.n), "num"],
+        ...MEASURES.map(k => [k === "dragMs" ? ms(m[k] && m[k].mean) : pm(m[k]), "num", k])];
+      for (const [v, cls, k] of cells) { const td = document.createElement("td"); td.textContent = v; if (cls) td.className = cls; metricTd(td, k); tr.appendChild(td); }
+      body.appendChild(tr);
+    }
+  } else {
+    head.innerHTML = `<tr><th>Time</th><th>Engine</th><th>Workers</th><th class="num">Rows</th><th class="num">Rep</th>${MEASURES.map(k => `<th class="num">${MEASURE_HEAD[k]}</th>`).join("")}</tr>`;
+    body.innerHTML = runs.length ? "" : `<tr><td colspan="12" class="note">No runs yet in this scope: press "Replay the drag", or benchmark all configurations.</td></tr>`;
+    for (const r of [...runs].reverse()) {
+      const tr = document.createElement("tr");
+      if (r.engine === engineLabel() && r.workers === workersLabel() && r.rows === rows) tr.className = "cur";
+      tr.dataset.series = seriesOf(r); tr.dataset.rows = String(r.rows);
+      const cells = [[new Date(r.when).toLocaleTimeString()], [r.engine], [r.workers], [Number(r.rows).toLocaleString(), "num"], [r.reps ? `${r.rep}/${r.reps}` : "–", "num"],
+        ...MEASURES.map(k => [r.error && k === "positions" ? r.error : cell(k === "dragMs" ? (r.dragMs || 1000) : r[k]), "num", k])];
+      for (const [v, cls, k] of cells) { const td = document.createElement("td"); td.textContent = v; if (cls) td.className = cls; metricTd(td, k); tr.appendChild(td); }
+      body.appendChild(tr);
+    }
   }
   renderChart().then(applyHighlight).catch(e => console.warn("chart:", e));
 }
@@ -338,17 +394,15 @@ function renderRuns() {
 // ---- linked selection between the chart and the table: a configuration (a line, or the rows
 // of the table with that engine and workers) and optionally a size (a point, a bar, a row).
 let hl = null; // { config, rows | null }
-const METRIC_COL = { 5: "positions", 7: "medianMs", 8: "maxLagMs", 9: "maxGapMs" }; // table column -> chart metric
 function applyHighlight() {
   const metric = $("chartMetric") ? $("chartMetric").value : "medianMs";
-  const mcol = Number(Object.keys(METRIC_COL).find(k => METRIC_COL[k] === metric));
   let first = null;
   for (const tr of document.querySelectorAll("#runsBody tr")) {
     const on = !!hl && tr.dataset.series === hl.config;
     const exact = on && (hl.rows === null || tr.dataset.rows === String(hl.rows));
     tr.classList.toggle("sel-c", on && !exact);
     tr.classList.toggle("sel", exact);
-    [...tr.children].forEach((td, i) => td.classList.toggle("selcell", exact && hl.rows !== null && i === mcol));
+    [...tr.children].forEach(td => td.classList.toggle("selcell", exact && hl.rows !== null && td.dataset.metric === metric));
     if (exact && !first) first = tr;
   }
   if (chartView) {
@@ -385,15 +439,15 @@ async function renderChart() {
   const host = $("runsChart");
   if (!host || typeof vegaLite === "undefined") return;
   const metric = $("chartMetric").value, scope = $("chartScope").value;
-  let runs = load(RUNS_KEY, []).filter(r => r.page === PAGE && !r.error && r[metric] > 0 && (r.dragMs || 1000) === dragMs);
-  if (scope === "batch") {
-    const last = [...runs].reverse().find(r => r.batch);
-    runs = last ? runs.filter(r => r.batch === last.batch) : [];
-  }
-  // The latest run per configuration and size.
-  const latest = new Map();
-  for (const r of runs) latest.set(seriesOf(r) + "|" + r.rows, r);
-  const values = [...latest.values()].map(r => ({ config: seriesOf(r), rows: Number(r.rows), v: r[metric], approx: seriesOf(r) === "WebGPU (approx.)" }));
+  const runs = scopedRuns().filter(r => !r.error && r[metric] > 0);
+  // Mean and 95% confidence interval (Student's t) over the runs of every configuration and size.
+  const groups = new Map();
+  for (const r of runs) { const k = seriesOf(r) + "|" + r.rows; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); }
+  const values = [...groups.values()].map(g => {
+    const { n, mean, ci } = stats(g.map(r => r[metric]));
+    const c = seriesOf(g[0]);
+    return { config: c, rows: Number(g[0].rows), v: mean, lo: Math.max(mean - ci, mean * 0.01), hi: mean + ci, ci, n, approx: c === "WebGPU (approx.)" };
+  });
   if (chartView) { chartView.finalize(); chartView = null; }
   host.innerHTML = "";
   if (!values.length) { host.innerHTML = `<div class="note">No runs to chart yet${scope === "batch" ? " from a benchmark" : ""}.</div>`; return; }
@@ -402,7 +456,9 @@ async function renderChart() {
   const color = { field: "config", type: "nominal", title: null, scale: { domain: used.map(s => s[0]), range: used.map(s => s[1]) }, sort: used.map(s => s[0]) };
   const sizes = [...new Set(values.map(d => d.rows))].sort((a, b) => a - b);
   const fmtV = metric === "positions" ? ",.0f" : ",.3~r";
-  const tooltip = [{ field: "config", title: "Configuration" }, { field: "rows", title: "Rows", format: "," }, { field: "v", title: METRICS[metric], format: fmtV }];
+  const tooltip = [{ field: "config", title: "Configuration" }, { field: "rows", title: "Rows", format: "," }, { field: "v", title: METRICS[metric] + ", mean", format: fmtV },
+    { field: "ci", title: "± 95% CI", format: fmtV }, { field: "n", title: "Runs" }];
+  const anyCI = values.some(d => d.n > 1);
   // Highlight (set from the table or by clicking): hlc a configuration, hlr a size.
   const dim = { condition: { test: "hlc === '' || datum.config === hlc", value: 1 }, value: 0.15 };
   const isSel = "datum.config === hlc && datum.rows === hlr";
@@ -414,6 +470,7 @@ async function renderChart() {
     layer: [
       { mark: { type: "line", strokeWidth: 2, cursor: "pointer" },
         encoding: { x, y, color, opacity: dim, strokeDash: { field: "approx", type: "nominal", legend: null, scale: { domain: [false, true], range: [[1, 0], [5, 3]] } } } },
+      ...(anyCI ? [{ mark: { type: "rule", strokeWidth: 1.5 }, encoding: { x, y: { ...y, field: "lo" }, y2: { field: "hi" }, color: { ...color, legend: null }, opacity: dim } }] : []),
       { mark: { type: "point", filled: true, cursor: "pointer" },
         encoding: { x, y, color, opacity: dim, tooltip,
           size: { condition: { test: isSel, value: 180 }, value: 45 },
@@ -426,7 +483,8 @@ async function renderChart() {
     layer: [
       { mark: { type: "bar", cornerRadiusEnd: 4, height: 16, cursor: "pointer" }, encoding: { y: { field: "config", type: "nominal", title: null, sort: used.map(s => s[0]) }, x: { field: "v", type: "quantitative", title: METRICS[metric], axis: { tickCount: 6 } }, color: { ...color, legend: null }, tooltip, opacity: dim,
         stroke: { condition: { test: "datum.config === hlc", value: "#1d232b" }, value: null }, strokeWidth: { value: 2 } } },
-      { mark: { type: "text", align: "left", dx: 4, fontSize: 11, color: "#1d232b" }, encoding: { y: { field: "config", type: "nominal", sort: used.map(s => s[0]) }, x: { field: "v", type: "quantitative" }, text: { field: "v", type: "quantitative", format: fmtV } } },
+      ...(anyCI ? [{ mark: { type: "rule", strokeWidth: 1.5, color: "#1d232b" }, encoding: { y: { field: "config", type: "nominal", sort: used.map(s => s[0]) }, x: { field: "lo", type: "quantitative" }, x2: { field: "hi" }, opacity: dim } }] : []),
+      { mark: { type: "text", align: "left", dx: 4, fontSize: 11, color: "#1d232b" }, encoding: { y: { field: "config", type: "nominal", sort: used.map(s => s[0]) }, x: { field: "hi", type: "quantitative" }, text: { field: "v", type: "quantitative", format: fmtV } } },
     ],
   };
   spec.$schema = "https://vega.github.io/schema/vega-lite/v6.json";
@@ -442,16 +500,28 @@ async function renderChart() {
   window.pwChart = chartView; // for the console
 }
 
+// CSV of what the table shows: the means (with n, SD and 95% CI) or every run; times in ms.
 function downloadRuns() {
-  const runs = load(RUNS_KEY, []);
-  const cols = ["when", "batch", "page", "engine", "workers", "rows", "dragMs", "positions", "updates", "medianMs", "maxLagMs", "maxGapMs", "settleMs", "firstViewMs", "error", "cores", "vega", "isolated", "gpu"];
-  // Header with units; times are milliseconds, rounded to 0.01 ms.
-  const head = { dragMs: "drag_ms", medianMs: "median_update_ms", maxLagMs: "largest_lag_ms", maxGapMs: "largest_frame_gap_ms", settleMs: "after_drag_ms", firstViewMs: "first_view_ms" };
-  const val = (c, v) => v === undefined || v === null ? "" : /Ms$/.test(c) && typeof v === "number" ? v.toFixed(2) : JSON.stringify(v);
-  const csv = [cols.map(c => head[c] || c).join(",")].concat(runs.map(r => cols.map(c => val(c, r[c] ?? (c === "dragMs" ? 1000 : r[c]))).join(","))).join("\n");
+  const view = $("tableView").value, runs = scopedRuns();
+  const unit = { dragMs: "drag_ms", medianMs: "median_update_ms", maxLagMs: "largest_lag_ms", maxGapMs: "largest_frame_gap_ms", settleMs: "after_drag_ms", firstViewMs: "first_view_ms", positions: "positions" };
+  const num = v => v === undefined || v === null || !Number.isFinite(v) ? "" : v.toFixed(2);
+  const q = v => v === undefined || v === null ? "" : JSON.stringify(v);
+  let lines;
+  if (view === "means") {
+    const head = ["page", "engine", "workers", "rows", "runs"];
+    for (const k of MEASURES) head.push(`${unit[k]}_mean`, `${unit[k]}_sd`, `${unit[k]}_ci95`);
+    lines = [head.join(",")].concat(meansOf(runs).map(m => [q(m.page), q(m.engine), q(m.workers), m.rows, m.n,
+      ...MEASURES.flatMap(k => m[k] ? [num(m[k].mean), num(m[k].sd), num(m[k].ci)] : ["", "", ""])].join(",")));
+  } else {
+    const cols = ["when", "batch", "page", "engine", "workers", "rows", "rep", "reps", ...MEASURES, "updates", "error", "cores", "vega", "isolated", "gpu"];
+    lines = [cols.map(c => unit[c] || c).join(",")].concat(runs.map(r => cols.map(c => {
+      const v = c === "dragMs" ? (r.dragMs || 1000) : r[c];
+      return /Ms$/.test(c) && typeof v === "number" ? num(v) : q(v);
+    }).join(",")));
+  }
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
-  a.download = "paravega-showcase-runs.csv";
+  a.href = URL.createObjectURL(new Blob([lines.join("\n")], { type: "text/csv" }));
+  a.download = `paravega-showcase-${PAGE}-${view}.csv`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
@@ -481,20 +551,26 @@ function startBench() {
   const sizes = $("benchSizes").value === "all" ? SIZES : [rows];
   const configs = benchConfigs(sizes).map(c => ({ ...c, drag: dragMs }));
   const batch = new Date().toISOString().slice(0, 19);
-  save(BENCH_KEY, { page: PAGE, batch, configs, i: 0 });
+  const reps = Number($("benchReps").value) || 5;
+  save(BENCH_KEY, { page: PAGE, batch, configs, i: 0, reps });
   gotoConfig(configs[0]);
 }
 function stopBench() { save(BENCH_KEY, null); $("benchStatus").textContent = "benchmark stopped"; $("benchStop").disabled = true; $("benchRun").disabled = false; }
 async function benchStep(view) {
   const plan = load(BENCH_KEY, null);
   if (!plan || plan.page !== PAGE) return;
-  $("benchStatus").textContent = `benchmark ${plan.batch}: configuration ${plan.i + 1} of ${plan.configs.length} (warm-up, then measured)`;
+  const reps = plan.reps || 1;
+  const status = what => { $("benchStatus").textContent = `benchmark ${plan.batch}: configuration ${plan.i + 1} of ${plan.configs.length}, ${what}`; };
   $("benchStop").disabled = false; $("benchRun").disabled = true;
   try {
+    status("warm-up");
     await replay(view);                 // warm-up (index builds, compiled kernels)
-    const res = await replay(view);
-    if (!load(BENCH_KEY, null)) return; // stopped meanwhile
-    storeRun(res, plan.batch);
+    for (let r = 1; r <= reps; r++) {
+      if (!load(BENCH_KEY, null)) return; // stopped meanwhile
+      status(`repetition ${r} of ${reps}`);
+      const res = await replay(view);
+      storeRun({ ...res, rep: r, reps }, plan.batch);
+    }
   } catch (e) { storeRun({ error: String(e && e.message || e) }, plan.batch); }
   advanceBench(plan);
 }
@@ -523,27 +599,30 @@ function setupRuns() {
   sec.innerHTML = `<div class="card"><h2>Your runs (stored in this browser)</h2>
 <div class="tools">
   <label>Benchmark <select id="benchSizes"><option value="this">this size</option><option value="all">all sizes</option></select></label>
+  <label>Repetitions <select id="benchReps"><option value="1">1</option><option value="3">3</option><option value="5" selected>5</option><option value="10">10</option></select></label>
   <button class="action" id="benchRun">Run all configurations</button>
   <button id="benchStop" disabled>Stop</button>
   <span id="benchStatus" class="note" style="margin:0"></span>
   <span style="flex:1"></span>
   <button id="runsCsv">Download CSV</button> <button id="runsClear">Clear runs</button>
 </div>
-<div class="note" style="margin:0 0 8px">Every replay is stored here. The benchmark loads every configuration in a fresh page (stock Vega, ParaVega with no workers and 1 to 16 workers, ${PAGE === "crossfilter" ? "the index, WebGPU" : "WebGPU exact and approximate"}), replays the drag once to warm up and once to measure. Stock Vega is skipped above 1M rows.</div>
-<div class="tools" style="margin-top:4px"><label>Chart <select id="chartMetric">${Object.entries(METRICS).map(([k, t]) => `<option value="${k}">${t.replace(/ \(ms\)/, "")}</option>`).join("")}</select></label>
-  <label>of <select id="chartScope"><option value="batch">the latest benchmark</option><option value="all">all runs (latest per configuration and size)</option></select></label></div>
+<div class="note" style="margin:0 0 8px">Every replay is stored here. The benchmark loads every configuration in a fresh page (stock Vega, ParaVega with no workers and 1 to 16 workers, ${PAGE === "crossfilter" ? "the index, WebGPU" : "WebGPU exact and approximate"}), replays the drag once to warm up and then as often as the repetitions say; the chart shows the mean with 95% confidence intervals. Stock Vega is skipped above 1M rows.</div>
+<div class="tools" style="margin-top:4px"><label>Show <select id="tableView"><option value="means">means ± 95% CI</option><option value="runs">every run</option></select></label>
+  <label>of <select id="chartScope"><option value="all">all runs</option><option value="batch">the latest benchmark</option></select></label>
+  <label>Chart <select id="chartMetric">${Object.entries(METRICS).map(([k, t]) => `<option value="${k}">${t.replace(/ \(ms\)/, "")}</option>`).join("")}</select></label></div>
 <div id="runsChart" style="width:100%;margin:0 0 12px"></div>
-<div class="scroll"><table><thead><tr><th>Time</th><th>Page</th><th>Engine</th><th>Workers</th><th class="num">Rows</th><th class="num">Positions</th><th class="num">Drag (ms)</th><th class="num">Median update (ms)</th><th class="num">Largest lag (ms)</th><th class="num">Largest frame gap (ms)</th><th class="num">After the drag (ms)</th><th class="num">First view (ms)</th></tr></thead><tbody id="runsBody"></tbody></table></div></div>`;
+<div class="scroll"><table><thead id="runsHead"></thead><tbody id="runsBody"></tbody></table></div></div>`;
   document.body.appendChild(sec);
   $("benchRun").onclick = startBench;
   $("benchStop").onclick = stopBench;
   $("runsCsv").onclick = downloadRuns;
-  $("chartMetric").onchange = $("chartScope").onchange = () => renderChart().then(applyHighlight).catch(e => console.warn("chart:", e));
+  $("chartMetric").onchange = () => renderChart().then(applyHighlight).catch(e => console.warn("chart:", e));
+  $("chartScope").onchange = $("tableView").onchange = renderRuns;
   // Click a row: its configuration and size in the chart; a measurement cell also charts that measurement.
   $("runsBody").addEventListener("click", async e => {
     const td = e.target.closest("td"), tr = e.target.closest("tr");
     if (!tr || !tr.dataset.series) return;
-    const col = [...tr.children].indexOf(td), m = METRIC_COL[col];
+    const m = td && td.dataset.metric && METRICS[td.dataset.metric] ? td.dataset.metric : null;
     if (m && $("chartMetric").value !== m) { $("chartMetric").value = m; hl = null; await renderChart(); }
     setHighlight({ config: tr.dataset.series, rows: Number(tr.dataset.rows) });
   });
@@ -554,7 +633,7 @@ function setupRuns() {
     $("benchStatus").textContent = `benchmark ${plan.batch}: loading configuration ${plan.i + 1} of ${plan.configs.length}`;
     // A configuration that does not finish in 5 minutes is recorded as a timeout.
     const i = plan.i;
-    setTimeout(() => { const p = load(BENCH_KEY, null); if (p && p.batch === plan.batch && p.i === i) { storeRun({ error: "timeout" }, p.batch); advanceBench(p); } }, 300000);
+    setTimeout(() => { const p = load(BENCH_KEY, null); if (p && p.batch === plan.batch && p.i === i) { storeRun({ error: "timeout" }, p.batch); advanceBench(p); } }, 300000 + 60000 * (plan.reps || 1));
   }
   renderRuns();
 }
