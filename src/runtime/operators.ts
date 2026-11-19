@@ -22,6 +22,7 @@ import {
 import { AggregateEngine, Runtime } from "../transforms";
 import { brushRanges, readsSelection, specializeSelections } from "./selection";
 import { SortKey, sortRows } from "./sort";
+import { gpuOrderStats, quantileRanks, quantileValue } from "../gpuStats";
 const QUANTILE_OPS = new Set(["median", "q1", "q3"]);
 import { MAX_SCAN_FRAME, WINDOW_AGG_OPS, WINDOW_RANK_OPS, WINDOW_VALUE_OPS, WindowOp, computeWindow } from "./window";
 import {
@@ -870,12 +871,32 @@ export function defineOperators(vega: any, rt: Runtime, opts: OperatorOptions): 
           if (!c || c.kind !== "num") throw new Unsupported("quantile of a non-numeric field");
           view = c.view; key = c.key; tag = c.tag || null;
         }
+        const p = P[ops[i]];
+        // With the GPU backend: exact quartiles from a GPU histogram per group (gpuStats.ts).
+        const gb = rt.gpu ? rt.gpu() : null;
+        if (gb && sel.length) {
+          const gsel = new Int32Array(new SharedArrayBuffer(4 * Math.max(1, n)));
+          const tkey = tag ? (table.exprColumn(f) as any).tagKey as string : null;
+          if (tag && tkey) pool.ensureColumn(tkey, "u8", tag.buffer as SharedArrayBuffer);
+          const gsrc = `const GK = cols[0], V = cols[1], T = ${tkey ? "cols[2]" : "null"}, R = bufs[0], out = bufs[1];
+const M = new Map(args.keys.map((k, j) => [k, j + 1]));
+for (let j = start; j < end; j++) { const r = R[j], v = V[r]; if (v !== v || (T && T[r] !== 0)) continue; out[r] = M.get(GK[r]) || 0; }`;
+          pool.ensureColumn(key, "f64", view.buffer as SharedArrayBuffer);
+          await pwMap({ key: kernelKey("pv:qgsel:", gsrc), src: gsrc }, {
+            pool, n: sel.length, cols: tkey ? [gkey, key, tkey] : [gkey, key], args: { keys },
+            bufs: [{ buffer: sel.buffer as SharedArrayBuffer, type: "i32" }, { buffer: gsel.buffer as SharedArrayBuffer, type: "i32" }],
+          });
+          const st = await gpuOrderStats(gb, pool, table, { key, view }, gsel, sel, keys.length, (_g, count) => quantileRanks(count, p));
+          if (st) {
+            st.forEach((s, g) => { if (s.count) rows[g][name] = quantileValue(s.count, p, s.values); });
+            continue;
+          }
+        }
         // Valid values only (vega-statistics' numbers: not null, not NaN).
         const valid = new Int32Array(new SharedArrayBuffer(4 * Math.max(1, sel.length)));
         let w = 0;
         for (let j = 0; j < sel.length; j++) { const r = sel[j]; if ((!tag || tag[r] === 0) && view[r] === view[r]) valid[w++] = r; }
         const sorted = await sortRows(pool, valid.subarray(0, w), [{ key: gkey, view: gk, order: 1 }, { key, view, order: 1 }]);
-        const p = P[ops[i]];
         for (let s0 = 0; s0 < sorted.length;) {
           const k = gk[sorted[s0]];
           let e = s0 + 1;
@@ -1187,7 +1208,7 @@ export function defineOperators(vega: any, rt: Runtime, opts: OperatorOptions): 
       if (sig === op._pwLastSig) return pulse.StopPropagation;
       const out = pulse.fork(pulse.NO_SOURCE | pulse.NO_FIELDS);
       const k = keepModified(_);
-      return computeDensity(vega, rel, rt.pool(), params).then(rows => {
+      return computeDensity(vega, rel, rt.pool(), params, { backend: rt.gpu ? rt.gpu() : null, approx: !!rt.gpuApprox }).then(rows => {
         op._pwLastSig = sig;
         const values = rows.map(r => vega.ingest(r));
         if (op.value) out.rem = op.value;

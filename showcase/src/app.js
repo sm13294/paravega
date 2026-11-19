@@ -12,7 +12,10 @@ const PAGE = window.SHOWCASE_PAGE === "distributions" ? "distributions" : "cross
 const $ = id => document.getElementById(id);
 const q = new URLSearchParams(location.search);
 const ENGINES = { stock: "Stock Vega", paravega: "ParaVega", index: "ParaVega + index", gpu: "ParaVega + WebGPU" };
-if (PAGE === "distributions") { delete ENGINES.index; delete ENGINES.gpu; } // counts only
+if (PAGE === "distributions") delete ENGINES.index; // the index answers counts only
+// WebGPU on the distribution explorer: exact (quartiles on the GPU) or approximate (also the
+// density sums, in 32-bit floats).
+const gpuMode = q.get("gpumode") === "approx" ? "approx" : "exact";
 const engine = ENGINES[q.get("engine")] ? q.get("engine") : "stock";
 const rows = Number(q.get("rows")) || 1000000;
 const cores = navigator.hardwareConcurrency || 4;
@@ -37,6 +40,11 @@ $("rows").onchange = () => go({ rows: $("rows").value });
 $("threads").value = ["0", "1", "2", "4", "8", "16"].includes(threadsParam) ? threadsParam : "auto";
 $("threads").disabled = engine === "stock";
 $("threads").onchange = () => go({ threads: $("threads").value });
+if ($("gpumode")) {
+  $("gpumode").value = gpuMode;
+  $("gpumode").disabled = engine !== "gpu";
+  $("gpumode").onchange = () => go({ gpumode: $("gpumode").value });
+}
 $("engineName").textContent = ENGINES[engine];
 $("engineName").className = "engine " + (engine === "stock" ? "stock" : "pv");
 $("engineNote").textContent = PAGE === "distributions" ? {
@@ -44,6 +52,9 @@ $("engineNote").textContent = PAGE === "distributions" ? {
   paravega: mainThread
     ? "ParaVega's operators over shared columns, but computed on the main thread without workers: faster than stock Vega, yet the page still stops while it computes."
     : `The same operators in parallel: the densities as MapReduce in rounds and the quartiles with a parallel sort, on ${workersText}.`,
+  gpu: gpuMode === "approx"
+    ? `WebGPU, approximate: the quartiles from an exact GPU histogram, and the density sums on the GPU in 32-bit floats (the curves differ from Vega's by about one part in a million); the rest on ${workersText}.`
+    : `WebGPU, exact: the quartiles from a GPU histogram of the selected values, then the few values of each quartile's bucket; the density sums on ${workersText}. The results equal stock Vega's.`,
 }[engine] : {
   stock: "Vega evaluates the filters, bins and counts tuple by tuple on the main thread.",
   paravega: mainThread
@@ -153,10 +164,10 @@ async function main() {
     spec.data.find(d => d.name === "src").values = makeTuples(rows);
   }
   let handle = null;
-  if (engine !== "stock") handle = registerParaweb(vega, { threads, ...(mainThread ? { workerFactory: inlineWorkerFactory() } : {}), preaggregate: engine === "index", gpu: engine === "gpu" });
+  if (engine !== "stock") handle = registerParaweb(vega, { threads, ...(mainThread ? { workerFactory: inlineWorkerFactory() } : {}), preaggregate: engine === "index", gpu: engine === "gpu", gpuApproximate: engine === "gpu" && gpuMode === "approx" });
   if (handle && engine === "gpu") {
     await handle.ready;
-    if (!handle.gpu) $("engineNote").innerHTML = '<span class="warn">WebGPU is not available in this browser, so the counts run on the workers.</span>';
+    if (!handle.gpu) $("engineNote").innerHTML = '<span class="warn">WebGPU is not available in this browser, so everything runs on the workers.</span>';
   }
   const active = !!(handle && handle.active !== false);
   if (engine !== "stock" && !active) {

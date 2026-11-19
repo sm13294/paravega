@@ -49,6 +49,13 @@ export interface ParawebOptions {
    */
   gpu?: boolean;
   /**
+   * With `gpu`: also run the kernel sums of density estimates on the GPU, in
+   * 32-bit floats. Densities then differ from Vega's by about one part in a
+   * million (WebGPU has no 64-bit floats). Without it, the GPU computes only
+   * exact results (counts and quartiles). Default false.
+   */
+  gpuApproximate?: boolean;
+  /**
    * Replace Vega's own operators (filter, formula, bin, aggregate, extent,
    * collect, relay) with parallel forms, so that unchanged specifications
    * run on ParaWeb. Default true; terminate() restores Vega's operators.
@@ -129,6 +136,7 @@ export function registerParaweb(vega: any, options: ParawebOptions = {}): Parawe
     preagg: options.preaggregate ?? false,
     onBuild: options.onPreaggBuild,
     onStats: options.onStats,
+    gpuApprox: options.gpuApproximate ?? false,
   };
 
   vega.transforms["pwaggregate"] = definePwAggregate(vega, rt);

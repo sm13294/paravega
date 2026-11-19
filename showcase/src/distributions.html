@@ -56,10 +56,14 @@
   <div class="seg" id="engines" role="group" aria-label="Engine">
     <button data-engine="stock">Stock Vega</button>
     <button data-engine="paravega">ParaVega</button>
+    <button data-engine="gpu">ParaVega + WebGPU</button>
   </div>
   <label>Workers <select id="threads">
     <option value="0">none (main thread)</option><option value="1">1</option><option value="2">2</option><option value="4">4</option>
     <option value="8">8</option><option value="16">16</option><option value="auto">all cores</option>
+  </select></label>
+  <label>GPU results <select id="gpumode">
+    <option value="exact">exact (quartiles on the GPU)</option><option value="approx">approximate (also densities, 32-bit)</option>
   </select></label>
   <label>Rows <select id="rows">
     <option value="100000">100K</option><option value="500000">500K</option><option value="1000000">1M</option>

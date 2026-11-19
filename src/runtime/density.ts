@@ -31,6 +31,8 @@ import { WorkerPool } from "../pool";
 import { map as pwMap } from "paraweb-js/resident";
 import { derivedDictionary, derivedNumeric } from "./derived";
 import { sortRows } from "./sort";
+import type { GpuBackend } from "../gpu";
+import { GpuKde, gpuOrderStats, quantileRanks, quantileValue } from "../gpuStats";
 
 export interface DensityParams {
   field: string;
@@ -95,7 +97,11 @@ function needed(get: (x: number) => number | undefined, extent: [number, number]
 
 interface Group { key: number; first: number; count: number; valid: number; min: number; max: number; sum: number; dims: any[] }
 
-export async function computeDensity(vega: any, rel: Relation, pool: WorkerPool, p: DensityParams): Promise<any[]> {
+/** The GPU backend, if any; approx also runs the kernel sums on the GPU in 32 bits (gpuStats.ts). */
+export interface DensityGpu { backend: GpuBackend | null; approx: boolean }
+
+export async function computeDensity(vega: any, rel: Relation, pool: WorkerPool, p: DensityParams, gpu?: DensityGpu): Promise<any[]> {
+  const gb = gpu && gpu.backend ? gpu.backend : null;
   const table = rel.base.table;
   // Values: a numeric column, with a tag column when some values are null.
   let value: { key: string; view: Float64Array };
@@ -180,6 +186,27 @@ return acc;`;
     })).flat() as Float64Array[];
     const m2 = new Float64Array(G);
     for (const a of dev) for (let g = 0; g < G; g++) m2[g] += a[g];
+    // With the GPU backend: exact quartiles of every group from a GPU histogram.
+    let gq: { count: number; values: number[] }[] | null = null;
+    if (gb) {
+      const gsel = new Int32Array(new SharedArrayBuffer(4 * Math.max(1, table.length)));
+      const sSrc = `const R = bufs[0], out = bufs[1], gidx = args.gidx;\nfor (let j = start; j < end; j++) { const i = R[j]; if (${isNull}) continue; out[i] = gidx[${keyExpr}] + 1; }`;
+      await pwMap({ key: kernelKey("pv:kde:gsel:", sSrc), src: sSrc }, { pool, n: m, cols, bufs: [sb(rows, "i32"), sb(gsel, "i32")], args: { gidx } });
+      gq = await gpuOrderStats(gb, pool, table, value, gsel, rows, G, (_g, count) => [...quantileRanks(count, 0.25), ...quantileRanks(count, 0.75)]);
+    }
+    if (gq) {
+      const q = gq;
+      bw = groups.map((g, j) => {
+        const n = g.valid;
+        const variance = n > 1 ? m2[j] / (n - 1) : undefined;
+        const d = variance ? Math.sqrt(variance) : variance;
+        const r1 = quantileRanks(n, 0.25).length;
+        const q0 = quantileValue(n, 0.25, q[j].values.slice(0, r1)), q2 = quantileValue(n, 0.75, q[j].values.slice(r1));
+        const h = (q2 - q0) / 1.34;
+        const v = Math.min(d as number, h) || (d as number) || Math.abs(q0) || 1;
+        return 1.06 * v * Math.pow(g.count, -0.2);
+      });
+    } else {
     // Rows sorted by group (order of first appearance), then value: exact quartiles.
     const gcol = new Float64Array(new SharedArrayBuffer(8 * Math.max(1, table.length)));
     const gSrc = `const R = bufs[0], out = bufs[1], gidx = args.gidx;\nfor (let j = start; j < end; j++) { const i = R[j]; out[i] = gidx[${keyExpr}]; }`;
@@ -214,6 +241,7 @@ return acc;`;
       // Vega's n is the length of the group, null values included.
       return 1.06 * v * Math.pow(g.count, -0.2);
     });
+    }
   }
 
   // 3. Samples of the curves, in rounds.
@@ -235,6 +263,23 @@ for (let j = start; j < end; j++) {
   for (let q = 0; q < xs.length; q++) acc[o + q] += K((xs[q] - v) / b, 0, 1);
 }
 return acc;`;
+  // Approximate: the kernel sums on the GPU in 32 bits, over the selected values grouped once.
+  let kde: GpuKde | null = null;
+  if (gb && gpu!.approx && p.method === "pdf") {
+    const GI = new Int32Array(new SharedArrayBuffer(4 * m)), VV = new Float64Array(new SharedArrayBuffer(8 * m));
+    const kSrc = `const R = bufs[0], GI = bufs[1], VV = bufs[2], V = cols[0], gidx = args.gidx;\nfor (let j = start; j < end; j++) { const i = R[j]; GI[j] = gidx[${keyExpr}]; VV[j] = ${isNull} ? 0 : V[i]; }`;
+    await pwMap({ key: kernelKey("pv:kde:gv:", kSrc), src: kSrc }, { pool, n: m, cols, bufs: [sb(rows, "i32"), sb(GI, "i32"), sb(VV, "f64")], args: { gidx } });
+    const cnt = new Uint32Array(G);
+    for (let j = 0; j < m; j++) cnt[GI[j]]++;
+    const off = new Uint32Array(2 * G), pos = new Uint32Array(G);
+    let o = 0;
+    for (let g = 0; g < G; g++) { off[2 * g] = o; pos[g] = o; o += cnt[g]; off[2 * g + 1] = o; }
+    const vals = new Float32Array(m);
+    for (let j = 0; j < m; j++) vals[pos[GI[j]]++] = VV[j];
+    kde = new GpuKde(gb, vals, off);
+  }
+  const bw32 = new Float32Array(bw);
+  try {
   for (let round = 0; round < 64; round++) {
     const X = groups.map((_g, j) => needed(x => memo[j].get(x), local[j], minsteps, maxsteps));
     const tot = X.reduce((s, xs) => s + xs.length, 0);
@@ -242,16 +287,24 @@ return acc;`;
     const off: number[] = [];
     let o = 0;
     for (const xs of X) { off.push(o); o += xs.length; }
-    const res = (await pwMap({ key: kernelKey("pv:kde:eval:", evalSrc), src: evalSrc }, {
-      pool, n: m, cols, bufs: [sb(rows, "i32")], args: { gidx, X, off, bw, tot },
-    })).flat() as Float64Array[];
-    const y = new Float64Array(tot);
-    for (const a of res) for (let q = 0; q < tot; q++) y[q] += a[q];
+    let y: Float64Array;
+    if (kde) {
+      const pts = new Float32Array(tot), grp = new Uint32Array(tot);
+      X.forEach((xs, j) => xs.forEach((x, q) => { pts[off[j] + q] = x; grp[off[j] + q] = j; }));
+      y = await kde.sums(pts, grp, bw32);
+    } else {
+      const res = (await pwMap({ key: kernelKey("pv:kde:eval:", evalSrc), src: evalSrc }, {
+        pool, n: m, cols, bufs: [sb(rows, "i32")], args: { gidx, X, off, bw, tot },
+      })).flat() as Float64Array[];
+      y = new Float64Array(tot);
+      for (const a of res) for (let q = 0; q < tot; q++) y[q] += a[q];
+    }
     X.forEach((xs, j) => xs.forEach((x, q) => {
       const s = y[off[j] + q], n = groups[j].count;
       memo[j].set(x, p.method === "pdf" ? s / bw[j] / n : s / n);
     }));
   }
+  } finally { if (kde) kde.destroy(); }
 
   // 4. Vega's sampleCurve over the computed values.
   const out: any[] = [];

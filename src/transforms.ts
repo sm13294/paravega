@@ -44,6 +44,8 @@ export interface Runtime {
   onStats?: (s: AggregateStats & { ms: number; name?: string }) => void;
   /** WebGPU backend, when enabled and ready. */
   gpu?: () => GpuBackend | null;
+  /** Run float sums (density estimates) on the GPU in 32 bits; results then differ in the last digits. */
+  gpuApprox?: boolean;
 }
 
 const BIN_PARAMS = [
