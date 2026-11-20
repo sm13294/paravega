@@ -187,25 +187,35 @@ async function main() {
 
   // Latency of a brush update: from the first evaluation of a new brush position until the next
   // position starts to evaluate or the dataflow is idle (measured to the frame).
-  // The distribution explorer's brush is a Vega-Lite selection: its value is the top-level signal b.
-  const brushSignals = PAGE === "distributions" ? ["b"] : FIELDS.map(f => `${f}_px`);
-  let prev = brushSignals.map(s => JSON.stringify(view.signal(s)));
+  // The brush is read from its pixel signals, which change before the evaluation of a new
+  // position (the distribution explorer's is the Vega-Lite signal b_x in the scope of its view;
+  // the top-level selection b changes only during the evaluation). An input event is delivered
+  // in the prerun of its evaluation, so the brush is read after the prerun.
+  const bx = PAGE === "distributions" ? findSignal(view._runtime, "b_x") : null;
+  const brushValue = bx ? () => JSON.stringify(bx.value) : () => JSON.stringify(FIELDS.map(f => view.signal(`${f}_px`)));
+  let prev = brushValue();
   let lastChangeStart = -Infinity;
   lagView = view;
   requestAnimationFrame(updateLag);
-  const evaluate = view.evaluate;
-  view.evaluate = function (...args) {
-    const cur = brushSignals.map(s => JSON.stringify(view.signal(s)));
-    const changed = cur.some((c, i) => c !== prev[i]);
+  const check = () => {
+    const cur = brushValue();
+    if (cur === prev) return;
     prev = cur;
     const s = performance.now();
-    const p = evaluate.apply(this, args);
-    if (changed) {
-      shownUpTo(lastChangeStart); // the previous brush position is drawn by now
-      if (openStart !== null) record(s - openStart);
-      lastChangeStart = openStart = s;
-    }
-    return p;
+    shownUpTo(lastChangeStart); // the previous brush position is drawn by now
+    if (openStart !== null) record(s - openStart);
+    lastChangeStart = openStart = s;
+  };
+  const evaluate = view.evaluate;
+  view.evaluate = function (encode, prerun, postrun) {
+    if (!prerun) { check(); return evaluate.call(this, encode, prerun, postrun); }
+    const pre = function (...a) {
+      const r = prerun.apply(this, a);
+      if (r && typeof r.then === "function") return r.then(v => { check(); return v; });
+      check();
+      return r;
+    };
+    return evaluate.call(this, encode, pre, postrun);
   };
   // Largest frame gap while the pointer is down on the dashboard.
   $("view").addEventListener("pointerdown", e => { dragging = true; dragMax = 0; startLagWatch(); noteInput(e.timeStamp); }, { capture: true });
